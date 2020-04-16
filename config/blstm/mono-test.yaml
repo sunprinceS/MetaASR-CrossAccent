@@ -20,6 +20,8 @@ solver:
   setting: 'mono-test' # seems no need to add baseline or something
   data_root: 'data'
   total_epochs: 2
+  spm_mapping: 'data/valid_train_en_unigram150_units.txt'
+  spm_model: 'data/valid_train_en_unigram150.model'
   #total_epochs: 25
 
   # Validation options

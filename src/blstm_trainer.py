@@ -74,7 +74,8 @@ def get_trainer(cls, config, paras, id2accent):
 
             if train:
                 info = { 'loss': loss.item() }
-                if self.global_step % 500 == 0:
+                if self.global_step % 5 == 0:
+                # if self.global_step % 500 == 0:
                     self.probe_model(x, pred, ys_out)
                 self.asr_opt.zero_grad()
                 loss.backward()
@@ -90,11 +91,15 @@ def get_trainer(cls, config, paras, id2accent):
             # logger.log(ys_out[0].size(), prefix='debug')
             show_preds = torch.argmax(pred[0], dim=-1).tolist()
             show_pred = [x[0] for x in groupby(show_preds)]
-            show_pred = [x for x in show_pred if x != 0]
+            show_pred = [x for x in show_pred if x != 0 and x != self.eos_id and x!= self.sos_id]
+            show_pred_text = [self.id2units[x] for x in show_pred]
+            show_pred_text = self.spm.DecodePieces(show_pred_text)
             show_y = ys_out[0].tolist()
-            logger.log(f"Prediction {show_pred}", prefix='debug')
-            logger.log(f"Truth {show_y}", prefix='debug')
-            cer = float(editdistance.eval(show_pred, show_y)) / len(show_y)
-            logger.log(f"CER: {cer * 100}", prefix='debug')
+            show_y_text = [self.id2units[x] for x in show_y if x!= self.eos_id and x!= self.sos_id]
+            show_y_text = self.spm.DecodePieces(show_y_text)
+            logger.log(f"**Prediction**: {show_pred_text}", prefix='debug')
+            logger.log(f"**Truth**: {show_y_text}", prefix='debug')
+            cer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text)
+            logger.log(f"WER: {cer * 100}", prefix='debug')
 
     return BLSTMTrainer(config, paras, id2accent)

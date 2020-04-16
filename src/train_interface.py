@@ -3,6 +3,7 @@ import time
 
 from shutil import rmtree
 from pathlib import Path
+import sentencepiece as spmlib
 
 from tqdm import tqdm
 from src.marcos import *
@@ -10,6 +11,7 @@ from src.io.dataset import get_loader
 import src.monitor.logger as logger
 from src.monitor.dashboard import Dashboard
 from torchexp.stat import RunningAvgDict
+
 
 
 class TrainInterface:
@@ -24,8 +26,17 @@ class TrainInterface:
         self.model_name = paras.model_name
         self.eval_ival = config['solver']['eval_ival']
         self.log_ival = config['solver']['log_ival']
-        self.half_batch_ilen = self.config['solver']['half_batch_ilen'],
-        self.dev_max_ilen = self.config['solver']['dev_max_ilen']
+        self.half_batch_ilen = config['solver']['half_batch_ilen'],
+        self.dev_max_ilen = config['solver']['dev_max_ilen']
+        self.spm = spmlib.SentencePieceProcessor()
+        self.spm.Load(config['solver']['spm_model'])
+        self.id2units = ['<blank>']
+        with open(config['solver']['spm_mapping']) as fin:
+            for line in fin.readlines():
+                # print(line.rstrip().split(' ')[0])
+                self.id2units.append(line.rstrip().split(' ')[0])
+
+        # with open()
 
         self.save_verbose = paras.save_verbose
         #######################################################################
