@@ -25,7 +25,7 @@ class MonoASRInterface(TrainInterface):
         self.lr_scheduler = None
         
         self.max_epoch = config['solver']['total_epochs']
-        self.best_cer = INIT_BEST_ER
+        self.best_wer = INIT_BEST_WER
         self.dashboard.set_status('training')
 
         self._train= partial(self.run_batch, train=True)
@@ -61,7 +61,7 @@ class MonoASRInterface(TrainInterface):
 
 
     #TODO: move to basic_trainer
-    def save_best_model(self, tpe='cer'):
+    def save_best_model(self, tpe='wer'):
         assert self.asr_model is not None
         model_save_path = self.log_dir.joinpath(f'model.{tpe}.best')
         logger.notice('Current best {}: {:3f}, save model to {}'.format(
@@ -111,7 +111,7 @@ class MonoASRInterface(TrainInterface):
                        self.log_dir.joinpath(f"snapshot.init"))
 
     def train(self):
-        # self.evaluate()
+        self.evaluate()
         try:
             if self.save_verbose:
                 self.save_init()
@@ -185,9 +185,9 @@ class MonoASRInterface(TrainInterface):
             self.dashboard.log_info('dev', dev_info)
             self.write_logs(dev_info)
 
-            cur_cer = float(dev_info['cer'])
-            if cur_cer < self.best_cer:
-                self.best_cer = cur_cer
+            cur_wer = float(dev_info['wer'])
+            if cur_wer < self.best_wer:
+                self.best_wer = cur_wer
                 self.save_best_model()
 
             if self.lr_scheduler is not None:

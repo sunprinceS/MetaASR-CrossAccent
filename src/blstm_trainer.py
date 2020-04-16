@@ -9,7 +9,6 @@ from src.model.blstm.mono_blstm import MonoBLSTM
 from src.nets_utils import to_device
 from itertools import groupby
 import editdistance
-from src.monitor.metric import cal_cer
 import src.monitor.logger as logger
 
 def get_trainer(cls, config, paras, id2accent):
@@ -74,32 +73,19 @@ def get_trainer(cls, config, paras, id2accent):
 
             if train:
                 info = { 'loss': loss.item() }
-                if self.global_step % 5 == 0:
-                # if self.global_step % 500 == 0:
-                    self.probe_model(x, pred, ys_out)
+                # if self.global_step % 5 == 0:
+                if self.global_step % 500 == 0:
+                    self.probe_model(pred, ys_out)
                 self.asr_opt.zero_grad()
                 loss.backward()
 
             else:
-                cer = cal_cer(pred.detach(), ys_out)
-                info = { 'cer': cer, 'loss':loss.item() }
+                wer = self.metric_observer.batch_cal_wer(pred.detach(), ys_out)
+                info = { 'wer': wer, 'loss':loss.item() }
 
             return info
 
-        def probe_model(self, x, pred, ys_out):
-            # logger.log(pred.size(), prefix='debug')
-            # logger.log(ys_out[0].size(), prefix='debug')
-            show_preds = torch.argmax(pred[0], dim=-1).tolist()
-            show_pred = [x[0] for x in groupby(show_preds)]
-            show_pred = [x for x in show_pred if x != 0 and x != self.eos_id and x!= self.sos_id]
-            show_pred_text = [self.id2units[x] for x in show_pred]
-            show_pred_text = self.spm.DecodePieces(show_pred_text)
-            show_y = ys_out[0].tolist()
-            show_y_text = [self.id2units[x] for x in show_y if x!= self.eos_id and x!= self.sos_id]
-            show_y_text = self.spm.DecodePieces(show_y_text)
-            logger.log(f"**Prediction**: {show_pred_text}", prefix='debug')
-            logger.log(f"**Truth**: {show_y_text}", prefix='debug')
-            cer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text)
-            logger.log(f"WER: {cer * 100}", prefix='debug')
+        def probe_model(self, pred, ys_out):
+            self.metric_observer.cal_wer(torch.argmax(pred[0], dim=-1), ys_out[0], show=True)
 
     return BLSTMTrainer(config, paras, id2accent)

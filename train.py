@@ -58,7 +58,7 @@ parser.add_argument('--no_bucket',action='store_true')
 
 # testing opts
 parser.add_argument('--test', action='store_true', help='Test the model.')
-parser.add_argument('--test_model',type=str, default='model.cer.best', 
+parser.add_argument('--test_model',type=str, default='model.wer.best', 
                     help='Evaluate on this model')
 # parser.add_argument('--resume_decode_step', default=0, type=int)
 # paser.add_argument('--decode_resume')

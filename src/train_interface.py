@@ -3,11 +3,11 @@ import time
 
 from shutil import rmtree
 from pathlib import Path
-import sentencepiece as spmlib
 
 from tqdm import tqdm
 from src.marcos import *
 from src.io.dataset import get_loader
+from src.monitor.metric import Metric
 import src.monitor.logger as logger
 from src.monitor.dashboard import Dashboard
 from torchexp.stat import RunningAvgDict
@@ -28,15 +28,14 @@ class TrainInterface:
         self.log_ival = config['solver']['log_ival']
         self.half_batch_ilen = config['solver']['half_batch_ilen'],
         self.dev_max_ilen = config['solver']['dev_max_ilen']
-        self.spm = spmlib.SentencePieceProcessor()
-        self.spm.Load(config['solver']['spm_model'])
+        self.metric_observer = Metric(config['solver']['spm_model'], config['solver']['spm_mapping'])
+        # self.spm = spmlib.SentencePieceProcessor()
+        # self.spm.Load(config['solver']['spm_model'])
         self.id2units = ['<blank>']
         with open(config['solver']['spm_mapping']) as fin:
             for line in fin.readlines():
                 # print(line.rstrip().split(' ')[0])
                 self.id2units.append(line.rstrip().split(' ')[0])
-
-        # with open()
 
         self.save_verbose = paras.save_verbose
         #######################################################################
@@ -114,6 +113,7 @@ class TrainInterface:
     def load_data(self):
         logger.notice(f"Loading data from {self.data_dir} with {self.paras.njobs} threads")
 
+        #TODO: combine the following with Metric
         self.id2ch = dict()
         self.ch2id = dict()
         with open(self.data_dir.resolve().parents[0].joinpath('valid_train_en_unigram150_units.txt')) as fin:
@@ -121,7 +121,6 @@ class TrainInterface:
                 ch, idx = line.split(' ')
                 self.id2ch[int(idx)] = ch
                 self.ch2id[ch] = int(idx)
-        logger.log(f"Train units: {self.ch2id.keys()}")
 
         setattr(self, 'train_set', get_loader(
             self.data_dir.joinpath('train'), 
