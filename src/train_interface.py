@@ -28,6 +28,7 @@ class TrainInterface:
         self.log_ival = config['solver']['log_ival']
         self.half_batch_ilen = config['solver']['half_batch_ilen'],
         self.dev_max_ilen = config['solver']['dev_max_ilen']
+        self.best_wer = INIT_BEST_WER
         self.metric_observer = Metric(config['solver']['spm_model'], config['solver']['spm_mapping'])
         # self.spm = spmlib.SentencePieceProcessor()
         # self.spm.Load(config['solver']['spm_model'])
@@ -99,6 +100,8 @@ class TrainInterface:
                 self.ep = int(f.read().strip())
             with open(Path(self.log_dir, 'global_step'),'r') as f:
                 self.global_step = int(f.read().strip())
+            with open(Path(self.log_dir, 'best_wer'), 'r') as f:
+                self.best_wer = float(f.read().strip().split(' ')[1])
 
             assert self.resume_model_path.exists(),\
                 f"{self.resume_model_path} not exists..."

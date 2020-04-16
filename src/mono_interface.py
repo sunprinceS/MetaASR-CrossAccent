@@ -25,7 +25,6 @@ class MonoASRInterface(TrainInterface):
         self.lr_scheduler = None
         
         self.max_epoch = config['solver']['total_epochs']
-        self.best_wer = INIT_BEST_WER
         self.dashboard.set_status('training')
 
         self._train= partial(self.run_batch, train=True)
@@ -84,7 +83,7 @@ class MonoASRInterface(TrainInterface):
         logger.log("ASR model initialization")
 
         if self.paras.resume:
-            logger.notice(f"Resume training from epoch {self.ep}")
+            logger.notice(f"Resume training from epoch {self.ep} (best wer: {self.best_wer})")
             self.asr_model.load_state_dict(torch.load(self.resume_model_path))
             self.asr_opt.load_state_dict(torch.load(self.optimizer_path))
             self.dashboard.set_step(self.global_step)
