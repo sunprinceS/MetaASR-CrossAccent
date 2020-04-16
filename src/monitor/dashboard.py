@@ -24,14 +24,14 @@ class Dashboard:
                                                 workspace=COMET_WORKSPACE,
                                                 auto_output_logging=None,
                                                 auto_metric_logging=None,
-                                                display_summary=False,
+                                                display_summary_level=0,
                                                 )
         else:
             self.exp = Experiment(project_name=COMET_PROJECT_NAME,
                                   workspace=COMET_WORKSPACE,
                                   auto_output_logging=None,
                                   auto_metric_logging=None,
-                                  display_summary=False,
+                                  display_summary_level=0,
                                   )
             #TODO: is there exists better way to do this?
             with open(self.expkey_f, 'w') as f:

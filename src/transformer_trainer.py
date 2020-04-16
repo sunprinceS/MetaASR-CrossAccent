@@ -3,51 +3,24 @@ from torch import nn
 import torch.nn.functional as F
 
 from tqdm import tqdm
-
 from src.marcos import *
-from src.model.blstm.mono_blstm import MonoBLSTM
+from src.model.transformer.mono_transformer import Transformer
 from src.nets_utils import to_device
 import src.monitor.logger as logger
 
 def get_trainer(cls, config, paras, id2accent):
-    logger.notice("BLSTM Trainer Init...")
+    logger.notice("Transformer Trainer Init...")
 
-    class BLSTMTrainer(cls):
-
+    class TransformerTrainer(cls):
         def __init__(self, config, paras, id2accent):
-            super(BLSTMTrainer, self).__init__(config, paras, id2accent)
+            super(TransformerTrainer, self).__init__(config, paras, id2accent)
 
         def set_model(self):
-            self.asr_model = MonoBLSTM(self.id2ch, self.config['asr_model']).cuda()
-            self.ctc_loss = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
-            
+            self.asr_model = Transformer(self.id2ch, self.config['asr_model']).cuda()
             self.sos_id = self.asr_model.sos_id
             self.eos_id = self.asr_model.eos_id
 
-            self.asr_opt = getattr(torch.optim, \
-                                   self.config['asr_model']['optimizer']['type'])
-            self.asr_opt = self.asr_opt(self.asr_model.parameters(), \
-                                        **self.config['asr_model']['optimizer_opt'])
-
-            self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                                                self.asr_opt, mode='min', 
-                                                factor=0.2, patience=3, 
-                                                verbose=True)
             super().load_model()
-            self.freeze_encoder(paras.freeze_layer)
-            
-        def freeze_encoder(self, module):
-            if module is not None:
-                if module == 'VGG':
-                    for p in self.asr_model.encoder.vgg.parameters():
-                        p.requires_grad = False
-                elif module == 'VGG_BLSTM':
-                    for p in self.asr_model.encoder.parameters():
-                        p.requires_grad = False
-                else:
-                    raise ValueError(f"Unknown freeze layer {module} (VGG, VGG_BLSTM)")
-
-                logger.log(f"Freeze {' '.join(module.split('_'))} layer", prefix='info')
 
         def exec(self):
             self.train()
@@ -60,7 +33,9 @@ def get_trainer(cls, config, paras, id2accent):
 
             y_true = torch.cat(ys_out)
 
-            pred, enc_lens = self.asr_model(x, ilens)
+
+            #FIXME: check which y should pass
+            pred, enc_lens = self.asr_model(x, ilens, ys_out, olens)
             olens = to_device(self.asr_model, olens)
             pred = F.log_softmax(pred, dim=-1) # (T, o_dim) 
 
@@ -86,4 +61,4 @@ def get_trainer(cls, config, paras, id2accent):
         def probe_model(self, pred, ys_out):
             self.metric_observer.cal_wer(torch.argmax(pred[0], dim=-1), ys_out[0], show=True)
 
-    return BLSTMTrainer(config, paras, id2accent)
+    return TransformerTrainer(config, paras, id2accent)

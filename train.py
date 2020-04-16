@@ -34,7 +34,7 @@ parser.add_argument('--no_cuda',action='store_true')
 parser.add_argument('--no_memmap',action='store_true')
 parser.add_argument('--algo', choices=['reptile','fomaml', 'multi', 'fomaml_fast','no'], required=True)
 parser.add_argument('--adv', action='store_true')
-parser.add_argument('--model_name', choices=['blstm','las'], default='blstm')
+parser.add_argument('--model_name', choices=['blstm','las','transformer'], default='transformer')
 parser.add_argument('--njobs', type=int, default=-1, 
                     help='Number of threads for decoding.')
 parser.add_argument('--freeze_layer', type=str, default=None, choices=['VGG','VGG_BLSTM'])
@@ -100,6 +100,8 @@ else:
         from src.blstm_trainer import get_trainer
     elif paras.model_name == 'las':
         from src.las_trainer import get_trainer
+    elif paras.model_name == 'transformer':
+        from src.transformer_trainer import get_trainer
     else:
         raise NotImplementedError
     solver = get_trainer(MonoASRInterface, config, paras, id2accent)

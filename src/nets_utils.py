@@ -43,6 +43,18 @@ def to_device(m, x):
     device = next(m.parameters()).device
     return x.to(device)
 
+def make_bool_pad_mask(lengths):
+    # assert lengths
+    batch_size = lengths.size(0)
+    maxlen = torch.max(lengths)
+    seq_range = torch.arange(0, maxlen, dtype=torch.int64)
+    seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, maxlen)
+    seq_length_expand = seq_range_expand.new(lengths).unsqueeze(-1)
+    mask = seq_range_expand >= seq_length_expand
+
+    return mask
+
+
 
 def make_pad_mask(lengths, xs=None, length_dim=-1):
     """Make mask tensor containing indices of padded part.

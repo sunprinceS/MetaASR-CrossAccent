@@ -1,0 +1,45 @@
+asr_model:
+  optimizer: 
+    type: 'SGD'
+
+  optimizer_opt:
+    lr: 0.01
+    momentum: 0.9
+    nesterov: True
+
+  encoder:                                    ########## Encoder
+    idim: 83
+    d_model: 512
+    nhead: 8
+    nlayers: 2
+    dim_inner: 2048
+    dropout: 0.1
+
+solver:
+  # Data options
+  setting: 'mono-transformer-test' # seems no need to add baseline or something
+  data_root: 'data'
+  total_epochs: 2
+  spm_mapping: 'data/valid_train_en_unigram150_units.txt'
+  spm_model: 'data/valid_train_en_unigram150.model'
+  #total_epochs: 25
+
+  # Validation options
+  #eval_ival: 20
+  eval_ival: 10000
+  log_ival: 10
+
+  batch_size: 32                              # training batch size (approx. 9G)
+  dev_batch_size: 32
+  min_ilen: 10
+  max_ilen: 3000
+  dev_max_ilen: 3000
+  half_batch_ilen: 512
+
+  beam_decode:
+    min_step_ratio: 0.0
+    max_step_ratio: 1.0
+    beam_size: 20
+    att_w: 0.5
+    ctc_w: 0.5
+    lm_w: 0

@@ -9,7 +9,6 @@ from functools import partial
 from collections import OrderedDict
 
 from src.marcos import *
-from src.nets_utils import to_device
 from src.train_interface import TrainInterface
 from src.utils import get_bar
 import src.monitor.logger as logger
