@@ -141,7 +141,7 @@ class MonoASRInterface(TrainInterface):
                     else:
                         self.asr_opt.step()
 
-                    if self.paras.model_name == 'transformer':
+                    if isinstance(self.asr_opt, TransformerOptimizer):
                         self.log_msg(self.asr_opt.lr)
                     else:
                         self.log_msg()

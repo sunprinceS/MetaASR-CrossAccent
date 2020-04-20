@@ -49,7 +49,7 @@ def get_trainer(cls, config, paras, id2accent):
 
             else:
                 wer = self.metric_observer.batch_cal_wer(pred.detach(), gold)
-                info = { 'wer': wer, 'loss':loss.item() }
+                info = { 'wer': wer, 'loss':loss.item(), 'acc': acc}
 
             return info
 

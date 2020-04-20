@@ -20,7 +20,7 @@ asr_model:
 
 solver:
   # Data options
-  setting: 'mono-transformer-test' # seems no need to add baseline or something
+  setting: 'mono-transformer' # seems no need to add baseline or something
   data_root: 'data'
   total_epochs: 25
   #total_epochs: 2
@@ -31,7 +31,7 @@ solver:
   # Validation options
   #eval_ival: 20
   eval_ival: 10000
-  log_ival: 10
+  log_ival: 20
 
   batch_size: 32 
   dev_batch_size: 32
