@@ -1,18 +1,21 @@
 asr_model:
-  optimizer: 
-    type: 'SGD'
-
   optimizer_opt:
-    lr: 0.01
-    momentum: 0.9
-    nesterov: True
+    k: 1.0
+    warmup_steps: 4000
 
-  encoder:                                    ########## Encoder
+  encoder:
     idim: 83
     d_model: 512
     nhead: 8
     nlayers: 2
-    dim_inner: 2048
+    d_inner: 2048
+    dropout: 0.1
+
+  decoder:
+    d_model: 512
+    nhead: 8
+    nlayers: 4
+    d_inner: 2048
     dropout: 0.1
 
 solver:
@@ -22,6 +25,7 @@ solver:
   total_epochs: 2
   spm_mapping: 'data/valid_train_en_unigram150_units.txt'
   spm_model: 'data/valid_train_en_unigram150.model'
+  label_smoothing: 0.1
   #total_epochs: 25
 
   # Validation options
@@ -29,7 +33,7 @@ solver:
   eval_ival: 10000
   log_ival: 10
 
-  batch_size: 32                              # training batch size (approx. 9G)
+  batch_size: 32 
   dev_batch_size: 32
   min_ilen: 10
   max_ilen: 3000

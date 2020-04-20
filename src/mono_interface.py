@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 from src.marcos import *
 from src.train_interface import TrainInterface
+from src.model.transformer.optimizer import TransformerOptimizer
 from src.utils import get_bar
 import src.monitor.logger as logger
 
@@ -39,10 +40,15 @@ class MonoASRInterface(TrainInterface):
         logger.log("Save model snapshot.latest", prefix='info')
         torch.save(self.asr_model.state_dict(), \
                    self.log_dir.joinpath("snapshot.latest"))
-        torch.save(self.asr_opt.state_dict(), \
-                   self.log_dir.joinpath("optimizer.latest"))
-        with open(self.log_dir.joinpath("info_dict.latest"),'wb') as fin:
-            pickle.dump(self.train_info, fin)
+        if isinstance(self.asr_opt, TransformerOptimizer):
+            with open(self.log_dir.joinpath("optimizer.latest"), "wb") as fout:
+                pickele.dump(self.asr_opt, fout)
+        else:
+            torch.save(self.asr_opt.state_dict(), \
+                       self.log_dir.joinpath("optimizer.latest"))
+
+        with open(self.log_dir.joinpath("info_dict.latest"),'wb') as fout:
+            pickle.dump(self.train_info, fout)
 
         with open(self.log_dir.joinpath("global_step"),'w') as fout:
             print(self.global_step, file=fout)
@@ -84,7 +90,11 @@ class MonoASRInterface(TrainInterface):
         if self.paras.resume:
             logger.notice(f"Resume training from epoch {self.ep} (best wer: {self.best_wer})")
             self.asr_model.load_state_dict(torch.load(self.resume_model_path))
-            self.asr_opt.load_state_dict(torch.load(self.optimizer_path))
+            if isinstance(self.asr_opt, TransformerOptimizer):
+                with open(self.optimizer_path, 'rb') as fin:
+                    self.asr_opt = pickle.load(fin)
+            else:
+                self.asr_opt.load_state_dict(torch.load(self.optimizer_path))
             self.dashboard.set_step(self.global_step)
         elif self.paras.pretrain:
             model_dict = self.asr_model.state_dict()
@@ -109,7 +119,7 @@ class MonoASRInterface(TrainInterface):
                        self.log_dir.joinpath(f"snapshot.init"))
 
     def train(self):
-        self.evaluate()
+        # self.evaluate()
         try:
             if self.save_verbose:
                 self.save_init()
@@ -131,7 +141,10 @@ class MonoASRInterface(TrainInterface):
                     else:
                         self.asr_opt.step()
 
-                    self.log_msg()
+                    if self.paras.model_name == 'transformer':
+                        self.log_msg(self.asr_opt.lr)
+                    else:
+                        self.log_msg()
                     self.check_evaluate()
 
                     self.global_step += 1

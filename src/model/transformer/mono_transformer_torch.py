@@ -114,7 +114,7 @@ class Transformer(nn.Module):
         ## TransformerEncoder forward
         xs_pad = xs_pad.transpose(0,1) # T * B * d_model
         xs_pad = self.pos_encoder(xs_pad)
-        pad_mask = make_bool_pad_mask(ilens)
+        pad_mask = make_bool_pad_mask(ilens) # T * B * d_model (if True: means padding)
         pad_mask = to_device(self, pad_mask)
 
         enc_pad = self.encoder(xs_pad, src_key_padding_mask=pad_mask) # T * B * d_model

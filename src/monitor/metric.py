@@ -7,22 +7,14 @@ import src.monitor.logger as logger
 from itertools import groupby
 
 class Metric:
-    def __init__(self, model_path, unit_path):
+    def __init__(self, model_path, id2units):
         self.spm = spmlib.SentencePieceProcessor()
         self.spm.Load(model_path)
-
-        self.id2units = ['<blank>']
-        with open(unit_path,'r') as fin:
-            for line in fin.readlines():
-                self.id2units.append(line.rstrip().split(' ')[0])
-
-        self.eos_id = len(self.id2units)
-        self.sos_id = len(self.id2units)
-        self.id2units.append('<s>')
-
+        self.id2units = id2units
+        self.sos_id = self.id2units.index('<s>')
+        self.eos_id = self.id2units.index('</s>')
 
         logger.log(f"Train units: {self.id2units}")
-
 
     def batch_cal_wer(self, preds, ys):
         pred = torch.argmax(preds, dim=-1)
@@ -37,7 +29,7 @@ class Metric:
     def cal_wer(self, pred, y, show=False):
         show_pred = pred.tolist()
         show_pred = [x[0] for x in groupby(show_pred)]
-        show_pred = [x for x in show_pred if x !=0 and x != self.sos_id and x!= self.eos_id]
+        show_pred = [x for x in show_pred if x != self.sos_id and x!= self.eos_id]
         show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
         
         show_y = y.tolist()
@@ -45,7 +37,6 @@ class Metric:
 
         wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
         
-
         if show:
             logger.log(f"Hyp:\t {show_pred_text}", prefix='debug')
             logger.log(f"Ref:\t {show_y_text}", prefix='debug')

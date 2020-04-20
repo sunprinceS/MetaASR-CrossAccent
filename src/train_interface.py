@@ -29,14 +29,14 @@ class TrainInterface:
         self.half_batch_ilen = config['solver']['half_batch_ilen'],
         self.dev_max_ilen = config['solver']['dev_max_ilen']
         self.best_wer = INIT_BEST_WER
-        self.metric_observer = Metric(config['solver']['spm_model'], config['solver']['spm_mapping'])
-        # self.spm = spmlib.SentencePieceProcessor()
-        # self.spm.Load(config['solver']['spm_model'])
-        self.id2units = ['<blank>']
+        self.id2units = ['<s>']
         with open(config['solver']['spm_mapping']) as fin:
             for line in fin.readlines():
                 # print(line.rstrip().split(' ')[0])
                 self.id2units.append(line.rstrip().split(' ')[0])
+
+        self.id2units.extend(['</s>'])
+        self.metric_observer = Metric(config['solver']['spm_model'], self.id2units)
 
         self.save_verbose = paras.save_verbose
         #######################################################################
@@ -151,7 +151,9 @@ class TrainInterface:
         with open(self.log_dir.joinpath(k),'a') as fout:
             print(f'{self.global_step} {v}', file=fout)
 
-    def log_msg(self):
+    def log_msg(self,lr=None):
         if self.global_step % self.log_ival == 0:
             logger.log_info(self.train_info, prefix='train')
             self.dashboard.log_info('train', self.train_info)
+            if lr is not None: # transformer
+                self.dashboard.log_other('lr', lr)

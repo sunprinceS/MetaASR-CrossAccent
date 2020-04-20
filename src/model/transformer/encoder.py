@@ -1,8 +1,8 @@
 import torch.nn as nn
 
-from attention import MultiHeadAttention
-from module import PositionalEncoding, PositionwiseFeedForward
-from utils import get_non_pad_mask, get_attn_pad_mask
+from src.model.transformer.attention import MultiHeadAttention
+from src.model.transformer.module import PositionalEncoding, PositionwiseFeedForward
+from src.model.transformer.utils import get_non_pad_mask, get_attn_pad_mask
 
 
 class Encoder(nn.Module):
@@ -11,15 +11,14 @@ class Encoder(nn.Module):
 
     # def __init__(self, d_input, n_layers, n_head, d_k, d_v,
                  # d_model, d_inner, dropout=0.1, pe_maxlen=5000):
-    def __init__(self, model_para, enc_in_dim, pe_max_len = 3000):
+    def __init__(self, model_para, enc_in_dim, pe_maxlen = 5000):
         super(Encoder, self).__init__()
-        # parameters
         self.d_model = model_para['encoder']['d_model']
         self.n_layers = model_para['encoder']['nlayers']
         self.n_head = model_para['encoder']['nhead']
         self.d_k = self.d_model
         self.d_v = self.d_model
-        self.d_inner = model_para['encoder']['dim_inner']
+        self.d_inner = model_para['encoder']['d_inner']
         self.dropout_rate = model_para['encoder']['dropout']
         self.pe_maxlen = pe_maxlen
 
@@ -30,29 +29,31 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(self.dropout_rate)
 
         self.layer_stack = nn.ModuleList([
-            EncoderLayer(self.d_model, self.d_inner, self.n_head, self.d_k, self.d_v, dropout=self.dropout)
-            for _ in range(n_layers)])
+            EncoderLayer(self.d_model, self.d_inner, self.n_head, self.d_k, self.d_v, dropout=self.dropout_rate)
+            for _ in range(self.n_layers)])
 
-    def forward(self, padded_input, input_lengths, return_attns=False):
+    def forward(self, enc_in_pad, enc_lens, return_attns=False):
         """
         Args:
-            padded_input: N x T x D
-            input_lengths: N
+            padded_input: B * T * vgg_o_dim
+            input_lengths: B
 
         Returns:
-            enc_output: N x T x H
+            enc_output: B x T x ???
         """
         enc_slf_attn_list = []
 
         # Prepare masks
-        non_pad_mask = get_non_pad_mask(padded_input, input_lengths=input_lengths)
-        length = padded_input.size(1)
-        slf_attn_mask = get_attn_pad_mask(padded_input, input_lengths, length)
+        # if True: means non-padding (OPPOSITE as my implementation)
+        non_pad_mask = get_non_pad_mask(enc_in_pad, input_lengths=enc_lens) # B * T * 1
+
+        max_len = enc_in_pad.size(1)
+        slf_attn_mask = get_attn_pad_mask(enc_in_pad, enc_lens, max_len)
 
         # Forward
         enc_output = self.dropout(
-            self.layer_norm_in(self.linear_in(padded_input)) +
-            self.positional_encoding(padded_input))
+            self.layer_norm_in(self.linear_in(enc_in_pad)) +
+            self.positional_encoding(enc_in_pad))
 
         for enc_layer in self.layer_stack:
             enc_output, enc_slf_attn = enc_layer(
@@ -64,7 +65,8 @@ class Encoder(nn.Module):
 
         if return_attns:
             return enc_output, enc_slf_attn_list
-        return enc_output,
+
+        return enc_output, None
 
 
 class EncoderLayer(nn.Module):

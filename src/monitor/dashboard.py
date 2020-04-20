@@ -89,6 +89,9 @@ class Dashboard:
     def log_info(self, prefix, info):
         self.exp.log_metrics({k: float(v) for k, v in info.items()}, prefix=prefix, step=self.global_step)
 
+    def log_other(self, name, value):
+        self.exp.log_metric(name, value, step = self.global_step)
+
     def log_step(self):
         self.exp.log_other('step',self.global_step)
 
