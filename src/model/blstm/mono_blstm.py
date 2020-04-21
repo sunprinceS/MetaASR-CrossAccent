@@ -28,9 +28,9 @@ class MonoBLSTM(nn.Module):
         # same as espnet
 
         self.idim = model_para['encoder']['idim']
-        self.odim = len(id2char) + 2
-        self.sos_id = len(id2char) + 1
-        self.eos_id = len(id2char) + 1
+        self.odim = len(id2char)
+        self.sos_id = len(id2char) - 1
+        self.eos_id = len(id2char) - 1
         enc_o_dim = model_para['encoder']['odim']
 
         # Construct model

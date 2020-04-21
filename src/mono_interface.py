@@ -42,7 +42,7 @@ class MonoASRInterface(TrainInterface):
                    self.log_dir.joinpath("snapshot.latest"))
         if isinstance(self.asr_opt, TransformerOptimizer):
             with open(self.log_dir.joinpath("optimizer.latest"), "wb") as fout:
-                pickele.dump(self.asr_opt, fout)
+                pickle.dump(self.asr_opt, fout)
         else:
             torch.save(self.asr_opt.state_dict(), \
                        self.log_dir.joinpath("optimizer.latest"))

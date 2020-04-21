@@ -7,12 +7,15 @@ import src.monitor.logger as logger
 from itertools import groupby
 
 class Metric:
-    def __init__(self, model_path, id2units):
+    def __init__(self, model_path, id2units, sos_id, eos_id, blank_id=-1):
         self.spm = spmlib.SentencePieceProcessor()
         self.spm.Load(model_path)
         self.id2units = id2units
-        self.sos_id = self.id2units.index('<s>')
-        self.eos_id = self.id2units.index('</s>')
+        self.sos_id = sos_id
+        self.eos_id = eos_id
+        self.blank_id = blank_id
+        # self.sos_id = self.id2units.index('<s>')
+        # self.eos_id = self.id2units.index('</s>')
 
         logger.log(f"Train units: {self.id2units}")
 
@@ -29,7 +32,9 @@ class Metric:
     def cal_wer(self, pred, y, show=False):
         show_pred = pred.tolist()
         show_pred = [x[0] for x in groupby(show_pred)]
-        show_pred = [x for x in show_pred if x != self.sos_id and x!= self.eos_id]
+        show_pred = [x for x in show_pred if x != self.sos_id and x!= self.eos_id and x!= self.blank_id]
+        # if self.blank_id:
+            # show_pred = [x for x in show_pred if x!= self.blank_id]
         show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
         
         show_y = y.tolist()

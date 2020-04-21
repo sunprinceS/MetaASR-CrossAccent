@@ -27,15 +27,26 @@ class TrainInterface:
         self.log_ival = config['solver']['log_ival']
         self.half_batch_ilen = config['solver']['half_batch_ilen'],
         self.dev_max_ilen = config['solver']['dev_max_ilen']
-        self.best_wer = INIT_BEST_WER
-        self.id2units = ['<s>']
-        with open(config['solver']['spm_mapping']) as fin:
-            for line in fin.readlines():
-                # print(line.rstrip().split(' ')[0])
-                self.id2units.append(line.rstrip().split(' ')[0])
 
-        self.id2units.extend(['</s>'])
-        self.metric_observer = Metric(config['solver']['spm_model'], self.id2units)
+        self.best_wer = INIT_BEST_WER
+        if self.paras.model_name == 'transformer':
+            self.id2units = ['<s>']
+            with open(config['solver']['spm_mapping']) as fin:
+                for line in fin.readlines():
+                    # print(line.rstrip().split(' ')[0])
+                    self.id2units.append(line.rstrip().split(' ')[0])
+            self.id2units.extend(['</s>'])
+            self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, 0, len(self.id2units)-1)
+        elif self.paras.model_name == 'blstm':
+            self.id2units = ['<blank>']
+            with open(config['solver']['spm_mapping']) as fin:
+                for line in fin.readlines():
+                    # print(line.rstrip().split(' ')[0])
+                    self.id2units.append(line.rstrip().split(' ')[0])
+            self.id2units.extend(['</s>'])
+            self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, len(self.id2units)-1, len(self.id2units)-1, 0)
+        else:
+            raise ValueError(f"Unknown model name {self.paras.model_name}")
 
         self.save_verbose = paras.save_verbose
         #######################################################################
@@ -122,13 +133,14 @@ class TrainInterface:
         logger.notice(f"Loading data from {self.data_dir} with {self.paras.njobs} threads")
 
         #TODO: combine the following with Metric
-        self.id2ch = dict()
-        self.ch2id = dict()
-        with open(self.data_dir.resolve().parents[0].joinpath('valid_train_en_unigram150_units.txt')) as fin:
-            for line in fin.readlines():
-                ch, idx = line.split(' ')
-                self.id2ch[int(idx)] = ch
-                self.ch2id[ch] = int(idx)
+        self.id2ch = self.id2units
+        # self.id2ch = dict()
+        # self.ch2id = dict()
+        # with open(self.data_dir.resolve().parents[0].joinpath('valid_train_en_unigram150_units.txt')) as fin:
+            # for line in fin.readlines():
+                # ch, idx = line.split(' ')
+                # self.id2ch[int(idx)] = ch
+                # self.ch2id[ch] = int(idx)
 
         setattr(self, 'train_set', get_loader(
             self.data_dir.joinpath('train'), 

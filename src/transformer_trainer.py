@@ -7,6 +7,7 @@ from src.marcos import *
 from src.model.transformer.mono_transformer import Transformer
 from src.model.transformer.loss import cal_performance
 from src.model.transformer.optimizer import TransformerOptimizer
+import torch_optimizer as optim
 from src.nets_utils import to_device
 import src.monitor.logger as logger
 
@@ -19,12 +20,14 @@ def get_trainer(cls, config, paras, id2accent):
 
         def set_model(self):
             self.asr_model = Transformer(self.id2ch, self.config['asr_model']).cuda()
-            self.asr_opt = TransformerOptimizer(
-                torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
-                self.config['asr_model']['optimizer_opt']['k'],
-                self.config['asr_model']['encoder']['d_model'],
-                self.config['asr_model']['optimizer_opt']['warmup_steps']
-            )
+            self.asr_opt = optim.RAdam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-9)
+            # self.asr_opt = TransformerOptimizer(
+                # torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
+                # optim.RAdam(self.asr_model.parameters())
+                # self.config['asr_model']['optimizer_opt']['k'],
+                # self.config['asr_model']['encoder']['d_model'],
+                # self.config['asr_model']['optimizer_opt']['warmup_steps']
+            # )
             self.label_smoothing = self.config['solver']['label_smoothing']
             self.sos_id = self.asr_model.sos_id
             self.eos_id = self.asr_model.eos_id
