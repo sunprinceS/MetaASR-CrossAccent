@@ -9,7 +9,6 @@ from src.marcos import *
 from src.io.dataset import get_loader
 from src.monitor.metric import Metric
 import src.monitor.logger as logger
-from src.monitor.dashboard import Dashboard
 from torchexp.stat import RunningAvgDict
 
 
@@ -110,6 +109,12 @@ class TrainInterface:
 
             with open(info_dict_path, 'rb') as fin:
                 self.train_info = pickle.load(fin)
+        if paras.use_tensorboard:
+            from src.monitor.tb_dashboard import Dashboard
+            logger.warning("Use tensorboard instead of comet")
+        else:
+            from src.monitor.dashboard import Dashboard
+
         self.dashboard = Dashboard(config, paras, self.log_dir, \
                                    self.train_type, paras.resume)
 

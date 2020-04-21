@@ -34,6 +34,7 @@ parser.add_argument('--no_cuda',action='store_true')
 parser.add_argument('--no_memmap',action='store_true')
 parser.add_argument('--algo', choices=['reptile','fomaml', 'multi', 'fomaml_fast','no'], required=True)
 parser.add_argument('--adv', action='store_true')
+parser.add_argument('--use_tensorboard',action='store_true')
 parser.add_argument('--model_name', choices=['blstm','las','transformer'], default='transformer')
 parser.add_argument('--njobs', type=int, default=-1, 
                     help='Number of threads for decoding.')
