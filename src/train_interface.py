@@ -120,6 +120,7 @@ class TrainInterface:
 
             with open(info_dict_path, 'rb') as fin:
                 self.train_info = pickle.load(fin)
+
         if paras.use_tensorboard:
             from src.monitor.tb_dashboard import Dashboard
             logger.warning("Use tensorboard instead of comet")
