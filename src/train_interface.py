@@ -55,13 +55,13 @@ class TrainInterface:
         cur_path = Path.cwd()
 
         if paras.pretrain:
-            assert paras.pretrain_suffix, \
+            assert paras.pretrain_suffix or paras.pretrain_model_path \
             "You should specify pretrain model and the corresponding prefix"
 
             if paras.pretrain_model_path:
                 self.pretrain_model_path = Path(paras.pretrain_model_path)
             else:
-                assert paras.pretrain_setting and paras.pretrain_step > 0, "Should specify pretrain_setting"
+                assert paras.pretrain_suffix and paras.pretrain_setting and paras.pretrain_step > 0, "Should specify pretrain_setting"
                 self.pretrain_model_path = Path(cur_path, LOG_DIR, 'pretrain', \
                                                 paras.pretrain_setting, paras.algo, \
                                                 paras.pretrain_suffix, \
