@@ -57,13 +57,6 @@ class MonoASRInterface(TrainInterface):
         with open(Path(self.log_dir,'epoch'),'w') as fout:
             print(self.ep, file=fout)
 
-    def write_logs(self, dev_info):
-        for k, v in dev_info.items():
-            self.write_log(f"dev_{k}", float(v))
-        for k, v in self.train_info.items():
-            self.write_log(f"train_{k}", float(v))
-
-
     #TODO: move to basic_trainer
     def save_best_model(self, tpe='wer'):
         assert self.asr_model is not None

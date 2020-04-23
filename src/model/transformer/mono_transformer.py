@@ -7,6 +7,7 @@ import math
 from math import floor
 from src.model.transformer.encoder import Encoder
 from src.model.transformer.decoder import Decoder
+from src.marcos import SOS_SYMBOL, EOS_SYMBOL
 
 from src.nets_utils import to_device
 import src.monitor.logger as logger
@@ -18,10 +19,10 @@ class Transformer(nn.Module):
 
         self.idim = model_para['encoder']['idim']
 
-        #FIXME: need to remove these hardcoded thing later
-        self.odim = len(id2char) + 2
-        self.sos_id = 0
-        self.eos_id = len(id2char) + 1
+        self.odim = len(id2char)
+        self.sos_id = id2char.index(SOS_SYMBOL)
+        # FIXME: Maybe we need to set sos_id = eos_id ???
+        self.eos_id = id2char.index(EOS_SYMBOL)
         self.vgg_ch_dim = 128
         
         self.feat_extractor = nn.Sequential(

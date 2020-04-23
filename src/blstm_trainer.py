@@ -73,17 +73,17 @@ def get_trainer(cls, config, paras, id2accent):
                 info = { 'loss': loss.item() }
                 # if self.global_step % 5 == 0:
                 if self.global_step % 500 == 0:
-                    self.probe_model(pred, ys_out)
+                    self.probe_model(pred, ys)
                 self.asr_opt.zero_grad()
                 loss.backward()
 
             else:
-                wer = self.metric_observer.batch_cal_wer(pred.detach(), ys_out)
+                wer = self.metric_observer.batch_cal_wer(pred.detach(), ys,['ctc'])['ctc']
                 info = { 'wer': wer, 'loss':loss.item() }
 
             return info
 
-        def probe_model(self, pred, ys_out):
-            self.metric_observer.cal_wer(torch.argmax(pred[0], dim=-1), ys_out[0], show=True)
+        def probe_model(self, pred, ys):
+            self.metric_observer.cal_ctc_wer(torch.argmax(pred[0], dim=-1), ys[0], show=True)
 
     return BLSTMTrainer(config, paras, id2accent)

@@ -25,8 +25,8 @@ solver:
   #total_epochs: 25
 
   # Validation options
-  #eval_ival: 20
-  eval_ival: 10000
+  eval_ival: 20
+  #eval_ival: 10000
   log_ival: 10
 
   batch_size: 32                              # training batch size (approx. 9G)

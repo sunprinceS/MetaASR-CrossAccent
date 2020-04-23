@@ -44,6 +44,6 @@ class Speller(nn.Module):
     def forward(self, enc):
         self.state_list[0], self.cell_list[0] = self.rnn0(enc, (self.state_list[0], self.cell_list[0]))
         for i in range(1, self.nlayers):
-            self.state_list[i], self.state_list[0] = getattr(self, f'rnn{i}')(self.state_list[i-1],(self.state_list[i],self.cell_list[i]))
+            self.state_list[i], self.cell_list[i] = getattr(self, f'rnn{i}')(self.state_list[i-1],(self.state_list[i],self.cell_list[i]))
 
         return self.state_list[-1]

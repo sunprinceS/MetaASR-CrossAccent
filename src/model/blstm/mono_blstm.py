@@ -5,9 +5,9 @@ import torch.nn.functional as F
 import numpy as np
 import math
 
-from src.modules.encoder import BlstmEncoder
-from src.modules.encoder import RNNP
+from src.modules.encoder import BlstmEncoder, RNNP
 from src.nets_utils import to_device, lecun_normal_init_parameters
+from src.marcos import BLANK_SYMBOL
 import src.monitor.logger as logger
 
 # import tensorflow as tf
@@ -53,7 +53,7 @@ class MonoBLSTM(nn.Module):
                 'recog_lm_usage': 'rescoring'
                 }
         self.vocab = self.odim
-        self.blank_id = 0
+        self.blank_id = id2char.index(BLANK_SYMBOL)
         # Don't know yet
         self.space = -1
 

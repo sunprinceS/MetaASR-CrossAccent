@@ -33,18 +33,16 @@ class TrainInterface:
             self.id2units = ['<s>']
             with open(config['solver']['spm_mapping']) as fin:
                 for line in fin.readlines():
-                    # print(line.rstrip().split(' ')[0])
                     self.id2units.append(line.rstrip().split(' ')[0])
             self.id2units.extend(['</s>'])
             self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, 0, len(self.id2units)-1)
         elif self.paras.model_name == 'blstm':
-            self.id2units = ['<blank>']
+            self.id2units = [BLANK_SYMBOL]
             with open(config['solver']['spm_mapping']) as fin:
                 for line in fin.readlines():
-                    # print(line.rstrip().split(' ')[0])
                     self.id2units.append(line.rstrip().split(' ')[0])
             self.id2units.extend(['</s>'])
-            self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, len(self.id2units)-1, len(self.id2units)-1, 0)
+            self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, len(self.id2units)-1, len(self.id2units)-1)
         else:
             raise ValueError(f"Unknown model name {self.paras.model_name}")
 
@@ -55,7 +53,7 @@ class TrainInterface:
         cur_path = Path.cwd()
 
         if paras.pretrain:
-            assert paras.pretrain_suffix or paras.pretrain_model_path \
+            assert paras.pretrain_suffix or paras.pretrain_model_path, \
             "You should specify pretrain model and the corresponding prefix"
 
             if paras.pretrain_model_path:
@@ -175,3 +173,11 @@ class TrainInterface:
             self.dashboard.log_info('train', self.train_info)
             if lr is not None: # transformer
                 self.dashboard.log_other('lr', lr)
+
+    def write_logs(self, dev_info):
+        for k, v in dev_info.items():
+            self.write_log(f"dev_{k}", float(v))
+        for k, v in self.train_info.items():
+            self.write_log(f"train_{k}", float(v))
+
+

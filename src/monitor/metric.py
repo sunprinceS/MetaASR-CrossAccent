@@ -4,41 +4,47 @@ import editdistance
 import sentencepiece as spmlib
 
 import src.monitor.logger as logger
+from src.marcos import BLANK_SYMBOL
 from itertools import groupby
 
 class Metric:
-    def __init__(self, model_path, id2units, sos_id, eos_id, blank_id=-1):
+    def __init__(self, model_path, id2units, sos_id, eos_id, ignore_id=None):
         self.spm = spmlib.SentencePieceProcessor()
         self.spm.Load(model_path)
         self.id2units = id2units
         self.sos_id = sos_id
         self.eos_id = eos_id
-        self.blank_id = blank_id
+        self.blank_id = None if BLANK_SYMBOL not in id2units else id2units.index(BLANK_SYMBOL)
+        self.ignore_id = ignore_id
         # self.sos_id = self.id2units.index('<s>')
         # self.eos_id = self.id2units.index('</s>')
 
         logger.log(f"Train units: {self.id2units}")
 
-    def batch_cal_wer(self, preds, ys):
+    def batch_cal_wer(self, preds, ys, modes):
         pred = torch.argmax(preds, dim=-1)
         batch_size = pred.size(0)
+        ret = {}
 
-        wer = 0.0
-        for h, y in zip(pred, ys):
-            wer += self.cal_wer(h, y)
+        for mode in modes:
+            wer = 0.0
+            for h, y in zip(pred, ys):
+                wer += getattr(self,f"cal_{mode}_wer")(h, y)
+            ret[mode] = wer/batch_size
 
-        return wer / batch_size
+        return ret
 
-    def cal_wer(self, pred, y, show=False):
+    def cal_ctc_wer(self, pred, y, show=False):
+        assert self.blank_id is not None
+
         show_pred = pred.tolist()
         show_pred = [x[0] for x in groupby(show_pred)]
         show_pred = [x for x in show_pred if x != self.sos_id and x!= self.eos_id and x!= self.blank_id]
-        # if self.blank_id:
-            # show_pred = [x for x in show_pred if x!= self.blank_id]
+
         show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
         
-        show_y = y.tolist()
-        show_y_text = self.spm.DecodePieces([self.id2units[x] for x in show_y if x!= self.sos_id and x != self.eos_id])
+        show_y = [self.id2units[x] for x in y.tolist()]
+        show_y_text = self.spm.DecodePieces(show_y)
 
         wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
         

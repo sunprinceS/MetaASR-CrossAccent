@@ -4,6 +4,10 @@ AVAIL_ACCENTS =['all','af','au','be','ca','en','hk','in','ir','my','nz', 'sc', '
 LOG_DIR='testing-logs'
 INIT_BEST_WER = 200.0
 GRAD_CLIP = 5
+IGNORE_ID=-1
+SOS_SYMBOL='<s>'
+EOS_SYMBOL='</s>'
+BLANK_SYMBOL='<blank>'
 
 NBEST = 1
 
