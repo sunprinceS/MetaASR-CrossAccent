@@ -17,7 +17,7 @@ asr_model:
 
 solver:
   # Data options
-  setting: 'mono-blstm' # seems no need to add baseline or something
+  setting: 'mono' # seems no need to add baseline or something
   data_root: 'data'
   total_epochs: 25
   spm_mapping: 'data/valid_train_en_unigram150_units.txt'

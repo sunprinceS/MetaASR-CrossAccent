@@ -127,3 +127,4 @@ dmypy.json
 data/
 *logs/
 deprecated/
+tensorboard/
