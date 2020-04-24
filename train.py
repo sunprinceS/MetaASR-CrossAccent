@@ -28,6 +28,7 @@ parser.add_argument('--eval_suffix', type=str, default=None,
 parser.add_argument('--runs', type=int, default=0)
 parser.add_argument('--accent', choices=AVAIL_ACCENTS, required=True)
 parser.add_argument('--overwrite',action='store_true')
+parser.add_argument('--eval_every_epoch',action='store_true')
 parser.add_argument('--seed', type=int, default=531, 
                     help='Random seed for reproducable results.')
 parser.add_argument('--no_cuda',action='store_true')
@@ -59,7 +60,7 @@ parser.add_argument('--no_bucket',action='store_true')
 
 # testing opts
 parser.add_argument('--test', action='store_true', help='Test the model.')
-parser.add_argument('--test_model',type=str, default='model.wer.best', 
+parser.add_argument('--test_model',type=str, default='model.cer.best', 
                     help='Evaluate on this model')
 parser.add_argument('--decode_batch_size', type=int, default=1)
 # parser.add_argument('--resume_decode_step', default=0, type=int)

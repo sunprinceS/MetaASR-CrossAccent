@@ -11,6 +11,7 @@ from src.marcos import *
 from src.utils import run_cmd
 import src.monitor.logger as logger
 import editdistance
+import unidecode
 
 
 parser = argparse.ArgumentParser(description='Evaluate the decoded hypothesis via sclite')
@@ -74,6 +75,9 @@ def to_list(s):
     ret = [id2units[i] for i in ret]
     return ret
 
+def remove_accent(s):
+    return unidecode.unidecode(s)
+
 ### Cal CER ####################################################################
 logger.notice("CER calculating...")
 cer = 0.0
@@ -82,8 +86,10 @@ with open(Path(decode_dir, 'best-hyp'),'r') as hyp_ref_in:
     for line in hyp_ref_in.readlines():
         cnt += 1
         ref, hyp = line.rstrip().split('\t')
-        ref = spm.DecodePieces(to_list(ref))
-        hyp = spm.DecodePieces(to_list(hyp))
+        ref = remove_accent(spm.DecodePieces(to_list(ref)))
+        ref.upper()
+        hyp = remove_accent(spm.DecodePieces(to_list(hyp)))
+        hyp.upper()
         cer += (editdistance.eval(ref, hyp) / len(ref) * 100)
     cer = cer  / cnt
 logger.log(f"CER: {cer}", prefix='test')
@@ -131,12 +137,15 @@ with open(Path(decode_dir,'best-hyp'),'r') as hyp_ref_in, \
     for i,line in enumerate(hyp_ref_in.readlines()):
         foo = line.rstrip().split('\t')
         if len(foo) == 1:
-            ref = spm.DecodePieces(to_list(foo[0]))
+            ref = remove_accent(spm.DecodePieces(to_list(foo[0])))
+            ref.upper()
             print(f"{ref} ({i//1000}k_{i})", file=ref_out)
             print(f"({i//1000}k_{i})", file=hyp_out)
         elif len(foo) == 2:
-            ref = spm.DecodePieces(to_list(foo[0]))
-            hyp = spm.DecodePieces(to_list(foo[1]))
+            ref = remove_accent(spm.DecodePieces(to_list(foo[0])))
+            ref.upper()
+            hyp = remove_accent(spm.DecodePieces(to_list(foo[1])))
+            hyp.upper()
             print(f"{ref} ({i//1000}k_{i})", file=ref_out)
             print(f"{hyp} ({i//1000}k_{i})", file=hyp_out)
         else:

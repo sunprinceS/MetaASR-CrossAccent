@@ -23,6 +23,7 @@ class MonoASRInterface(TrainInterface):
         self.asr_model = None
         self.asr_opt = None
         self.lr_scheduler = None
+        self.eval_every_epoch = paras.eval_every_epoch
         
         self.max_epoch = config['solver']['total_epochs']
         self.dashboard.set_status('training')
@@ -152,6 +153,9 @@ class MonoASRInterface(TrainInterface):
                 self.save_per_epoch()
                 self.dashboard.check()
                 tbar.close()
+
+                if self.eval_every_epoch:
+                    self.evaluate()
 
         except KeyboardInterrupt:
             logger.warning("Training stopped")
