@@ -8,6 +8,7 @@ IGNORE_ID=-1
 SOS_SYMBOL='<s>'
 EOS_SYMBOL='</s>'
 BLANK_SYMBOL='<blank>'
+IGNORE_CH_LIST=['.',',','\'','"','?',':','’']
 
 NBEST = 1
 
