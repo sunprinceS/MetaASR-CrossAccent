@@ -9,7 +9,7 @@ import random
 # from numpy.lib.format import open_memmap
 
 BUCKET_SIZE=1
-ILEN_MIN = 1300
+ILEN_MIN = 2
 ILEN_MAX = 10000
 
 # def _seed_worker(worker_idx):

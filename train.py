@@ -49,7 +49,7 @@ parser.add_argument('--pretrain_suffix', type=str, default=None,
 parser.add_argument('--pretrain_setting', type=str, default=None)
 parser.add_argument('--pretrain_runs', type=int, default=0)
 parser.add_argument('--pretrain_step', type=int, default=0)
-parser.add_argument('--pretrain_tgt_accent', choices=AVAIL_ACCENTS, default='107')
+parser.add_argument('--pretrain_tgt_accent', choices=AVAIL_ACCENTS, default='all')
 parser.add_argument('--pretrain_model_path',type=str, default=None, 
                     help='directly set Pretrain model path')
 
@@ -61,6 +61,7 @@ parser.add_argument('--no_bucket',action='store_true')
 parser.add_argument('--test', action='store_true', help='Test the model.')
 parser.add_argument('--test_model',type=str, default='model.wer.best', 
                     help='Evaluate on this model')
+parser.add_argument('--decode_batch_size', type=int, default=1)
 # parser.add_argument('--resume_decode_step', default=0, type=int)
 # paser.add_argument('--decode_resume')
 parser.add_argument('--decode_mode', choices=['greedy', 'beam', 'lm_beam'],
@@ -89,6 +90,12 @@ random.seed(paras.seed)
 np.random.seed(paras.seed)
 torch.manual_seed(paras.seed)
 if torch.cuda.is_available(): torch.cuda.manual_seed_all(paras.seed)
+
+if paras.decode_mode != 'greedy':
+    assert paras.decode_batch_size == 1, f"decode_batch_size can only be 1 if decode_mode is {paras.decode_mode}"
+    if paras.decode_batch_size > 1 and torch.cuda.device_count() == 0:
+        logger.warning(f"Decode batch size is {paras.decode_batch_size}, but no gpu detected, so reset to 1 and use cpu for decoding")
+        paras.decode_batch_size = 1
 
 with open(Path('data','accent-code.json'),'r') as fin:
     id2accent = json.load(fin)

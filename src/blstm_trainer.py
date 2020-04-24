@@ -78,12 +78,14 @@ def get_trainer(cls, config, paras, id2accent):
                 loss.backward()
 
             else:
-                wer = self.metric_observer.batch_cal_wer(pred.detach(), ys,['ctc'])['ctc']
-                info = { 'wer': wer, 'loss':loss.item() }
+                cer = self.metric_observer.batch_cal_er(pred.detach(), ys, ['ctc'], ['cer'])['ctc_cer']
+                wer = self.metric_observer.batch_cal_er(pred.detach(), ys, ['ctc'], ['wer'])['ctc_wer']
+                info = { 'cer':cer, 'wer': wer, 'loss':loss.item() }
 
             return info
 
         def probe_model(self, pred, ys):
+            self.metric_observer.cal_ctc_cer(torch.argmax(pred[0], dim=-1), ys[0], show=True, show_decode=True)
             self.metric_observer.cal_ctc_wer(torch.argmax(pred[0], dim=-1), ys[0], show=True)
 
     return BLSTMTrainer(config, paras, id2accent)

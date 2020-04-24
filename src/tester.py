@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from src.marcos import *
 from src.io.dataset import get_loader
+from src.utils import get_bar
 import src.monitor.logger as logger
 
 class Tester:
@@ -44,6 +45,8 @@ class Tester:
         ### Decode
         self.decode_mode = paras.decode_mode
         self.beam_decode_param = config['solver']['beam_decode']
+        self.batch_size = paras.decode_batch_size
+        self.use_gpu = self.batch_size > 1
 
         if paras.decode_mode == 'lm_beam':
             assert paras.lm_model_path is not None, "In LM Beam decode mode, lm_model_path should be specified"
@@ -52,12 +55,12 @@ class Tester:
         else :
             self.lm_model_path = None
 
-        if paras.decode_mode == 'greedy':
-            self._decode = self.greedy_decode
-        elif paras.decode_mode == 'beam' or paras.decode_mode == 'lm_beam':
-            self._decode = self.beam_decode
-        else :
-            raise NotImplementedError
+        # if paras.decode_mode == 'greedy':
+            # self._decode = self.greedy_decode
+        # elif paras.decode_mode == 'beam' or paras.decode_mode == 'lm_beam':
+            # self._decode = self.beam_decode
+        # else :
+            # raise NotImplementedError
         #####################################################################
 
         ### Resume Mechanism
@@ -103,7 +106,9 @@ class Tester:
 
         setattr(self, 'eval_set', get_loader(
             self.data_dir.joinpath('test'),
-            batch_size = 1,
+            # self.data_dir.joinpath('dev'),
+            batch_size = self.batch_size,
+            half_batch_ilen = 512 if self.batch_size > 1 else None,
             is_memmap = self.is_memmap,
             is_bucket = False,
             shuffle = False,
@@ -113,19 +118,36 @@ class Tester:
     def exec(self):
         if self.decode_mode != 'greedy':
             logger.notice(f"Start decoding with beam search (with beam size: {self.config['solver']['beam_decode']['beam_size']})")
+            raise NotImplementedError(f"{self.decode_mode} haven't supported yet")
+            self._decode = self.beam_decode
         else:
             logger.notice("Start greedy decoding")
-        logger.log(f"Number of utterances to decode {len(self.eval_set)}, decoding with {self.njobs} threads")
+            if self.batch_size > 1:
+                logger.log(f"Number of utterance batches to decode: {len(self.eval_set)}, decoding with {self.batch_size} batch_size using gpu")
+                self._decode = self.gpu_greedy_decode
+                self.njobs = 1
+            else:
+                logger.log(f"Number of utterances to decode: {len(self.eval_set)}, decoding with {self.njobs} threads using cpu")
+                self._decode = self.greedy_decode
 
-        try:
-            _ = Parallel(n_jobs=self.njobs)(delayed(self._decode)(i, x, ilen, y, olen) for i, (x, ilen, y, olen) in enumerate(self.eval_set))
+        if self.njobs > 1:
+            try:
+                _ = Parallel(n_jobs=self.njobs)(delayed(self._decode)(i, x, ilen, y, olen) for i, (x, ilen, y, olen) in enumerate(self.eval_set))
 
-        #NOTE: cannot log comet here, since it cannot serialize
-        except KeyboardInterrupt:
-            logger.warning("Decoding stopped")
+            #NOTE: cannot log comet here, since it cannot serialize
+            except KeyboardInterrupt:
+                logger.warning("Decoding stopped")
+            else:
+                logger.notice("Decoding done")
+                # self.comet_exp.log_other('status','decoded')
         else:
-            logger.notice("Decoding done")
-            # self.comet_exp.log_other('status','decoded')
+
+            tbar = get_bar(total=len(self.eval_set), leave=True)
+
+            for cur_b, (xs, ilens, ys, olens) in enumerate(self.eval_set):
+                self.gpu_greedy_decode(xs, ilens, ys, olens)
+                tbar.update(1)
+
 
     def set_model(self):
 
@@ -138,7 +160,11 @@ class Tester:
             raise NotImplementedError
         self.asr_model = ASRModel(self.id2ch, self.config['asr_model'])
 
-        self.asr_model.load_state_dict(torch.load(self.model_path, map_location=torch.device('cpu')))
+        if self.use_gpu:
+            self.asr_model.load_state_dict(torch.load(self.model_path))
+            self.asr_model = self.asr_model.cuda()
+        else:
+            self.asr_model.load_state_dict(torch.load(self.model_path, map_location=torch.device('cpu')))
         self.asr_model.eval()
         logger.log(f'ASR model device {self.asr_model.device}', prefix='debug')
         self.sos_id = self.asr_model.sos_id
@@ -160,10 +186,30 @@ class Tester:
     def trim(self,hyp):
         assert isinstance(hyp, list)
         if self.model_name == 'blstm':
-            return [i for i in hyp if i < self.sos_id]
+            #FIXME: should we discard everyting after eos_id???
+            return [i for i in hyp if i < self.eos_id]
         else:
             raise NotImplementedError
         # return [i for i in hyp if i < self.sos_id]
+
+    #TODO: make the following more modularized
+    def gpu_greedy_decode(self, xs, ilens, ys, olens):
+        with torch.no_grad():
+            preds, _ = self.asr_model(xs, ilens)
+            preds = torch.argmax(preds, dim=-1)
+
+            for pred, y in zip(preds, ys):
+                pred = self.trim(pred.tolist())
+                pred = [x[0] for x in groupby(pred)]
+                if self.blank_id is not None:
+                    pred = [x for x in pred if x!= self.blank_id]
+                self.write_hyp(y.tolist(), pred)
+            del preds
+        del xs, ilens, ys, olens
+        return True
+
+
+
 
     def greedy_decode(self, cur_step, x, ilen, y, olen):
         if cur_step > self.prev_decode_step:
@@ -176,7 +222,7 @@ class Tester:
                 if self.blank_id is not None:
                     hyp = [x for x in hyp if x != self.blank_id]
                 # del model
-            self.write_hyp(y[0],hyp)
+            self.write_hyp(y[0].tolist(),hyp)
             del hyp
         del x, ilen, y, olen
         return True
@@ -196,4 +242,4 @@ class Tester:
 
     def write_hyp(self, y, hyp):
         with open(Path(self.decode_dir, 'best-hyp'),'a') as fout:
-            fout.write("{}\t{}\n".format(" ".join(str(i) for i in y.tolist())," ".join(str(i) for i in hyp)))
+            fout.write("{}\t{}\n".format(" ".join(str(i) for i in y)," ".join(str(i) for i in hyp)))

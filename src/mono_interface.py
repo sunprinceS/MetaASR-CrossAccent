@@ -58,13 +58,15 @@ class MonoASRInterface(TrainInterface):
             print(self.ep, file=fout)
 
     #TODO: move to basic_trainer
-    def save_best_model(self, tpe='wer'):
+    def save_best_model(self, tpe='cer', only_stat=False):
         assert self.asr_model is not None
-        model_save_path = self.log_dir.joinpath(f'model.{tpe}.best')
-        logger.notice('Current best {}: {:3f}, save model to {}'.format(
-            tpe.upper(), getattr(self,f'best_{tpe}'), model_save_path))
 
-        torch.save(self.asr_model.state_dict(), model_save_path)
+        if not only_stat:
+            model_save_path = self.log_dir.joinpath(f'model.{tpe}.best')
+            logger.notice('Current best {}: {:3f}, save model to {}'.format(
+                tpe.upper(), getattr(self,f'best_{tpe}'), model_save_path))
+            torch.save(self.asr_model.state_dict(), model_save_path)
+
         with open(self.log_dir.joinpath(f'best_{tpe}'),'w') as fout:
             print('{} {}'.format(self.global_step, \
                                  getattr(self,f'best_{tpe}')), file=fout)
@@ -81,7 +83,7 @@ class MonoASRInterface(TrainInterface):
         logger.log("ASR model initialization")
 
         if self.paras.resume:
-            logger.notice(f"Resume training from epoch {self.ep} (best wer: {self.best_wer})")
+            logger.notice(f"Resume training from epoch {self.ep} (best cer: {self.best_cer}, best wer: {self.best_wer})")
             self.asr_model.load_state_dict(torch.load(self.resume_model_path))
             if isinstance(self.asr_opt, TransformerOptimizer):
                 with open(self.optimizer_path, 'rb') as fin:
@@ -189,10 +191,15 @@ class MonoASRInterface(TrainInterface):
             self.dashboard.log_info('dev', dev_info)
             self.write_logs(dev_info)
 
+            cur_cer = float(dev_info['cer'])
             cur_wer = float(dev_info['wer'])
+            if cur_cer < self.best_cer:
+                self.best_cer = cur_cer
+                self.save_best_model()
+
             if cur_wer < self.best_wer:
                 self.best_wer = cur_wer
-                self.save_best_model()
+                self.save_best_model('wer',only_stat=True)
 
             if self.lr_scheduler is not None:
                 self.lr_scheduler.step(float(dev_info['loss']))

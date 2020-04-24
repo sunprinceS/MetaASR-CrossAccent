@@ -21,20 +21,46 @@ class Metric:
 
         logger.log(f"Train units: {self.id2units}")
 
-    def batch_cal_wer(self, preds, ys, modes):
+    def batch_cal_er(self, preds, ys, modes, er_modes):
         pred = torch.argmax(preds, dim=-1)
         batch_size = pred.size(0)
         ret = {}
 
         for mode in modes:
-            wer = 0.0
-            for h, y in zip(pred, ys):
-                wer += getattr(self,f"cal_{mode}_wer")(h, y)
-            ret[mode] = wer/batch_size
+            for er_mode in er_modes:
+                er = 0.0
+                for h, y in zip(pred, ys):
+                    er += getattr(self,f"cal_{mode}_{er_mode}")(h, y)
+                ret[f"{mode}_{er_mode}"] = er/batch_size
 
         return ret
 
-    def cal_ctc_wer(self, pred, y, show=False):
+    def cal_ctc_wer(self, pred, y, show=False, show_decode=False):
+        assert self.blank_id is not None
+
+        show_pred = pred.tolist()
+        show_pred = [x[0] for x in groupby(show_pred)]
+        show_pred = [x for x in show_pred if x != self.sos_id and x!= self.eos_id and x!= self.blank_id]
+
+        show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
+        show_pred_text = show_pred_text.split(' ')
+        
+        show_y = [self.id2units[x] for x in y.tolist()]
+        show_y_text = self.spm.DecodePieces(show_y)
+        show_y_text = show_y_text.split(' ')
+
+        wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
+        
+        if show_decode:
+            logger.log(f"Hyp:\t {show_pred_text}", prefix='debug')
+            logger.log(f"Ref:\t {show_y_text}", prefix='debug')
+        if show:
+            logger.log(f"WER: {wer}", prefix='debug')
+
+        return wer
+
+        
+    def cal_ctc_cer(self, pred, y, show=False, show_decode=False):
         assert self.blank_id is not None
 
         show_pred = pred.tolist()
@@ -46,14 +72,15 @@ class Metric:
         show_y = [self.id2units[x] for x in y.tolist()]
         show_y_text = self.spm.DecodePieces(show_y)
 
-        wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
+        cer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
         
-        if show:
+        if show_decode:
             logger.log(f"Hyp:\t {show_pred_text}", prefix='debug')
             logger.log(f"Ref:\t {show_y_text}", prefix='debug')
-            logger.log(f"WER: {wer}", prefix='debug')
+        if show:
+            logger.log(f"CER: {cer}", prefix='debug')
 
-        return wer
+        return cer
 
         
 

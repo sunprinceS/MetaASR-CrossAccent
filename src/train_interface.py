@@ -28,20 +28,21 @@ class TrainInterface:
         self.half_batch_ilen = config['solver']['half_batch_ilen'],
         self.dev_max_ilen = config['solver']['dev_max_ilen']
 
-        self.best_wer = INIT_BEST_WER
+        self.best_wer = INIT_BEST_ER
+        self.best_cer = INIT_BEST_ER
         if self.paras.model_name == 'transformer':
-            self.id2units = ['<s>']
+            self.id2units = [SOS_SYMBOL]
             with open(config['solver']['spm_mapping']) as fin:
                 for line in fin.readlines():
                     self.id2units.append(line.rstrip().split(' ')[0])
-            self.id2units.extend(['</s>'])
+            self.id2units.apped(EOS_SYMBOL)
             self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, 0, len(self.id2units)-1)
         elif self.paras.model_name == 'blstm':
             self.id2units = [BLANK_SYMBOL]
             with open(config['solver']['spm_mapping']) as fin:
                 for line in fin.readlines():
                     self.id2units.append(line.rstrip().split(' ')[0])
-            self.id2units.extend(['</s>'])
+            self.id2units.append(EOS_SYMBOL)
             self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, len(self.id2units)-1, len(self.id2units)-1)
         else:
             raise ValueError(f"Unknown model name {self.paras.model_name}")
@@ -110,6 +111,8 @@ class TrainInterface:
                 self.global_step = int(f.read().strip())
             with open(Path(self.log_dir, 'best_wer'), 'r') as f:
                 self.best_wer = float(f.read().strip().split(' ')[1])
+            with open(Path(self.log_dir, 'best_cer'),'r') as f:
+                self.best_cer = float(f.read().strip().split(' ')[1])
 
             assert self.resume_model_path.exists(),\
                 f"{self.resume_model_path} not exists..."
