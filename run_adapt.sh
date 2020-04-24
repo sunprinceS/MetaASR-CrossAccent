@@ -22,7 +22,7 @@ do
   do
     CONFIG="config/$MODEL_NAME/$CONFIG_NAME.yaml"
 
-    hrun_prefix="hrun -G -d -c 6 -m 6 -t 3-0 -n \"$MODEL_NAME/$CONFIG_NAME $ALGO-transfer($PRETRAIN_SUFFIX) at step $pretrain_step ($DECODE_MODE-decode)\""
+    hrun_prefix="hrun -X s09 -G -d -c 6 -m 6 -t 3-0 -n \"$MODEL_NAME/$CONFIG_NAME $ALGO-transfer($PRETRAIN_SUFFIX) at step $pretrain_step ($DECODE_MODE-decode)\""
     cmd="./adapt_full_exp.sh $MODEL_NAME $CONFIG $OVERWRITE $DECODE_MODE $ALGO $PRETRAIN_SETTING $PRETRAIN_SUFFIX $pretrain_step $accent"
 
     if [[ $SPOT == "spot" ]];then

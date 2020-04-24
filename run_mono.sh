@@ -17,7 +17,7 @@ for accent in $EVAL_ACCENTS
 do
   CONFIG="config/$MODEL_NAME/$CONFIG_NAME.yaml"
 
-  hrun_prefix="hrun -G -d -c 6 -m 6 -t 3-0 -n \"$MODEL_NAME/$CONFIG_NAME ($DECODE_MODE-decode)\""
+  hrun_prefix="hrun -X s09 -G -d -c 6 -m 6 -t 3-0 -n \"$MODEL_NAME/$CONFIG_NAME ($DECODE_MODE-decode)\""
   cmd="./mono_full_exp.sh $MODEL_NAME $CONFIG $OVERWRITE $DECODE_MODE $EVAL_SUFFIX $accent"
 
   if [[ $SPOT == "spot" ]];then
