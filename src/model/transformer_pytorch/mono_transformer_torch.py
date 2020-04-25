@@ -83,6 +83,12 @@ class MyTransformer(nn.Module):
     def device(self):
         return next(self.parameters()).device
 
+    # def init_parameters(self):
+        # for p in self.parameters():
+            # if p.dim() > 1:
+                # nn.init.xavier_uniform_(p)
+
+
 
     def extract_feat(self, xs_pad, ilens):
         batch_size = len(ilens)

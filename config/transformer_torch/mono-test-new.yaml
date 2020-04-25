@@ -12,10 +12,10 @@ asr_model:
   tgt_share_weight: 1
 
   encoder:
-    nlayers: 8
+    nlayers: 4
 
   decoder:
-    nlayers: 4
+    nlayers: 2
 
   pos_dropout: 0.1
 
