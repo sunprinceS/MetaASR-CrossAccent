@@ -110,7 +110,7 @@ else:
     elif paras.model_name == 'las':
         from src.las_trainer import get_trainer
     elif paras.model_name == 'transformer':
-        from src.transformer_trainer import get_trainer
+        from src.transformer_torch_trainer import get_trainer
     else:
         raise NotImplementedError
     solver = get_trainer(MonoASRInterface, config, paras, id2accent)

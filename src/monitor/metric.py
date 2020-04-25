@@ -4,7 +4,7 @@ import editdistance
 import sentencepiece as spmlib
 
 import src.monitor.logger as logger
-from src.marcos import BLANK_SYMBOL
+from src.marcos import BLANK_SYMBOL, IGNORE_ID
 from itertools import groupby
 
 class Metric:
@@ -34,6 +34,45 @@ class Metric:
                 ret[f"{mode}_{er_mode}"] = er/batch_size
 
         return ret
+
+    def cal_att_wer(self, pred, y, show=False, show_decode=False):
+        show_pred = pred.tolist()
+        show_pred = [x for x in show_pred if x!= self.sos_id and x!= self.eos_id]
+        show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
+        show_pred_text = show_pred_text.split(' ')
+
+        show_y = [self.id2units[x] for x in y.tolist() if x!= self.eos_id and x!= IGNORE_ID]
+        show_y_text = self.spm.DecodePieces(show_y)
+        show_y_text = show_y_text.split(' ')
+        
+        wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
+        
+        if show_decode:
+            logger.log(f"Hyp:\t {show_pred_text}", prefix='debug')
+            logger.log(f"Ref:\t {show_y_text}", prefix='debug')
+        if show:
+            logger.log(f"WER: {wer}", prefix='debug')
+
+        return wer
+
+
+    def cal_att_cer(self, pred, y, show=False, show_decode=False):
+        show_pred = pred.tolist()
+        show_pred = [x for x in show_pred if x!= self.sos_id and x!= self.eos_id]
+        show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
+
+        show_y = [self.id2units[x] for x in y.tolist() if x!= self.eos_id and x!= IGNORE_ID]
+        show_y_text = self.spm.DecodePieces(show_y)
+        
+        wer = float(editdistance.eval(show_pred_text, show_y_text)) / len(show_y_text) * 100
+        
+        if show_decode:
+            logger.log(f"Hyp:\t {show_pred_text}", prefix='debug')
+            logger.log(f"Ref:\t {show_y_text}", prefix='debug')
+        if show:
+            logger.log(f"CER: {wer}", prefix='debug')
+
+        return wer
 
     def cal_ctc_wer(self, pred, y, show=False, show_decode=False):
         assert self.blank_id is not None

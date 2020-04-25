@@ -35,7 +35,7 @@ class TrainInterface:
             with open(config['solver']['spm_mapping']) as fin:
                 for line in fin.readlines():
                     self.id2units.append(line.rstrip().split(' ')[0])
-            self.id2units.apped(EOS_SYMBOL)
+            self.id2units.append(EOS_SYMBOL)
             self.metric_observer = Metric(config['solver']['spm_model'], self.id2units, 0, len(self.id2units)-1)
         elif self.paras.model_name == 'blstm':
             self.id2units = [BLANK_SYMBOL]

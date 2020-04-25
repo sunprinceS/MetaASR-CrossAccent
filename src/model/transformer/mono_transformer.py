@@ -81,9 +81,6 @@ class Transformer(nn.Module):
         enc_out_pad, _ = self.encoder(enc_pad, enc_lens)
 
         # pred is score before softmax
-        # print(ys)
-        # print(type(ys))
-        # print(type(ys[0]))
         pred, gold, *_ = self.decoder(enc_out_pad, enc_lens, ys)
 
         return pred, gold
