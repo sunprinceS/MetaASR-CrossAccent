@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from src.marcos import *
 from src.train_interface import TrainInterface
-from src.model.transformer.optimizer import TransformerOptimizer
+from src.model.transformer_pytorch.optimizer import TransformerOptimizer
 from src.utils import get_bar
 import src.monitor.logger as logger
 

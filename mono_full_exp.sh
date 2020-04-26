@@ -37,6 +37,6 @@ echo $cmd
 eval $cmd
 
 ## score
-cmd="./score.sh --config $CONFIG --eval_suffix $EVAL_SUFFIX --accent $ACCENT --algo $ALGO --model_name $MODEL_NAME --decode_mode $DECODE_MODE"
+cmd="./score.sh --config $CONFIG --eval_suffix $EVAL_SUFFIX --accent $ACCENT --algo $ALGO no --model_name $MODEL_NAME --decode_mode $DECODE_MODE"
 echo $cmd
 eval $cmd
