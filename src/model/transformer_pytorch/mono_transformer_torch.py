@@ -69,24 +69,44 @@ class MyTransformer(nn.Module):
             logger.warning("Tie weight of char_trans and embedding")
             self.char_trans.weight = self.pre_embed.weight
 
-        self.transformer = nn.Transformer(
-            d_model = model_para['d_model'],
-            nhead = model_para['nheads'],
-            num_encoder_layers = model_para['encoder']['nlayers'],
-            num_decoder_layers = model_para['decoder']['nlayers'],
+        self.d_model = model_para['d_model']
+        self.nhead = model_para['nheads']
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model = self.d_model,
+            nhead = self.nhead,
             dim_feedforward = model_para['d_inner'],
             dropout=model_para['dropout']
         )
-        # self.init_parameters()
+        encoder_norm = nn.LayerNorm(model_para['d_model'])
+        self.encoder = nn.TransformerEncoder(
+            encoder_layer = encoder_layer,
+            num_layers = model_para['encoder']['nlayers'],
+            norm = encoder_norm
+        )
+
+        decoder_layer = nn.TransformerDecoderLayer(
+            d_model = self.d_model,
+            nhead = self.nhead,
+            dim_feedforward = model_para['d_inner'],
+            dropout=model_para['dropout']
+        )
+        decoder_norm = nn.LayerNorm(model_para['d_model'])
+        self.decoder = nn.TransformerDecoder(
+            decoder_layer = decoder_layer,
+            num_layers = model_para['decoder']['nlayers'],
+            norm = decoder_norm
+        )
+
+        self.init_parameters()
 
     @property
     def device(self):
         return next(self.parameters()).device
 
-    # def init_parameters(self):
-        # for p in self.parameters():
-            # if p.dim() > 1:
-                # nn.init.xavier_uniform_(p)
+    def init_parameters(self):
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
 
 
 
@@ -142,45 +162,12 @@ class MyTransformer(nn.Module):
         # tgt_pad_mask will be used in tgt_key_padding_mask
         tgt_pad_mask = to_device(self, make_bool_pad_mask(olens))
 
-        out = self.transformer(
-            src = enc_pad, 
-            tgt = ys_in_pad,
-            src_key_padding_mask = enc_pad_mask,
-            tgt_mask = tgt_self_attn_mask,
-            tgt_key_padding_mask = tgt_pad_mask,
-            memory_key_padding_mask = enc_pad_mask
-        )
+        memory = self.encoder(enc_pad, src_key_padding_mask = enc_pad_mask)
+        out = self.decoder(ys_in_pad, memory, 
+                           tgt_mask=tgt_self_attn_mask,
+                           memory_key_padding_mask=enc_pad_mask)
         # out: L * B * d_model
         out = out.transpose(0,1) # B * L * d_model
         logit = self.char_trans(out) # B * L * odim
 
         return logit, ys_out_pad
-
-
-    # def enc_forward(self, xs_pad, ilens, ys_pad, olens):
-
-        # assert xs_pad.size(0) == ilens.size(0) == len(ys_pad) == olens.size(0), "Batch size mismatch"
-        # batch_size = xs_pad.size(0)
-
-        # xs_pad = to_device(self,xs_pad)
-
-        # ## VGG forward
-        # xs_pad = xs_pad.view(batch_size, xs_pad.size(1), 1, xs_pad.size(2)).transpose(1,2) # B * 1 * T * D(83)
-        # xs_pad = self.feat_extractor(xs_pad) # B * T * D' (128 * 20)
-        # ilens = torch.floor(ilens.to(dtype=torch.float32)/4).to(dtype=torch.int64)
-        # xs_pad = xs_pad.transpose(1,2)
-        # xs_pad = xs_pad.contiguous().view(batch_size,  xs_pad.size(1), xs_pad.size(2) * xs_pad.size(3))
-        # xs_pad = self.vgg2enc(xs_pad) # B * T * d_model
-
-
-        # ## TransformerEncoder forward
-        # xs_pad = xs_pad.transpose(0,1) # T * B * d_model
-        # xs_pad = self.pos_encoder(xs_pad)
-        # pad_mask = make_bool_pad_mask(ilens) # T * B * d_model (if True: means padding)
-        # pad_mask = to_device(self, pad_mask)
-
-        # enc_pad = self.encoder(xs_pad, src_key_padding_mask=pad_mask) # T * B * d_model
-
-        # return enc_pad, ilens
-
-    # def dec_forward(self, enc_pad, enc_lens, ys_pad, olens):

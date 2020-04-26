@@ -83,7 +83,7 @@ if paras.adv:
     assert paras.algo != 'no'
     paras.algo += '-adv'
 
-paras.njobs = paras.njobs if paras.njobs > 0 else get_usable_cpu_cnt()
+paras.njobs = paras.njobs if paras.njobs >= 0 else get_usable_cpu_cnt()
 config = yaml.safe_load(open(paras.config,'r'))
 
 # Seed init.
