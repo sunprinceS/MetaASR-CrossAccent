@@ -21,6 +21,17 @@ class Metric:
 
         logger.log(f"Train units: {self.id2units}")
 
+    def discard_ch_after_eos(self, ls):
+        eos_pos = 0
+        if len(ls) == 1:
+            return []
+        else:
+            for pos in range(1,len(ls)):
+                if ls[pos] == self.eos_id:
+                    eos_pos = pos
+        return ls[:eos_pos]
+
+
     def batch_cal_er(self, preds, ys, modes, er_modes):
         pred = torch.argmax(preds, dim=-1)
         batch_size = pred.size(0)
@@ -36,8 +47,8 @@ class Metric:
         return ret
 
     def cal_att_wer(self, pred, y, show=False, show_decode=False):
-        show_pred = pred.tolist()
-        show_pred = [x for x in show_pred if x!= self.sos_id and x!= self.eos_id]
+        show_pred = self.discard_ch_after_eos(pred.tolist())
+        show_pred = [x for x in show_pred if x!= self.sos_id]
         show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
         show_pred_text = show_pred_text.split(' ')
 
@@ -57,8 +68,8 @@ class Metric:
 
 
     def cal_att_cer(self, pred, y, show=False, show_decode=False):
-        show_pred = pred.tolist()
-        show_pred = [x for x in show_pred if x!= self.sos_id and x!= self.eos_id]
+        show_pred = self.discard_ch_after_eos(pred.tolist())
+        show_pred = [x for x in show_pred if x!= self.sos_id]
         show_pred_text = self.spm.DecodePieces([self.id2units[x] for x in show_pred])
 
         show_y = [self.id2units[x] for x in y.tolist() if x!= self.eos_id and x!= IGNORE_ID]
