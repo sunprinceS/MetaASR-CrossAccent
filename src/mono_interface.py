@@ -59,7 +59,7 @@ class MonoASRInterface(TrainInterface):
             print(self.ep, file=fout)
 
     #TODO: move to basic_trainer
-    def save_best_model(self, tpe='cer', only_stat=False):
+    def save_best_model(self, tpe='wer', only_stat=False):
         assert self.asr_model is not None
 
         if not only_stat:
@@ -197,13 +197,13 @@ class MonoASRInterface(TrainInterface):
 
             cur_cer = float(dev_info['cer'])
             cur_wer = float(dev_info['wer'])
-            if cur_cer < self.best_cer:
-                self.best_cer = cur_cer
-                self.save_best_model()
-
             if cur_wer < self.best_wer:
                 self.best_wer = cur_wer
-                self.save_best_model('wer',only_stat=True)
+                self.save_best_model()
+
+            if cur_cer < self.best_cer:
+                self.best_cer = cur_cer
+                self.save_best_model('cer',only_stat=True)
 
             if self.lr_scheduler is not None:
                 self.lr_scheduler.step(float(dev_info['loss']))
