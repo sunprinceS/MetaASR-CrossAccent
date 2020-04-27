@@ -29,6 +29,7 @@ class Metric:
             for pos in range(1,len(ls)):
                 if ls[pos] == self.eos_id:
                     eos_pos = pos
+                    break
         return ls[:eos_pos]
 
 

@@ -46,7 +46,7 @@ class Tester:
         self.decode_mode = paras.decode_mode
         self.beam_decode_param = config['solver']['beam_decode']
         self.batch_size = paras.decode_batch_size
-        self.use_gpu = self.batch_size > 1
+        self.use_gpu = paras.cuda
 
         if paras.decode_mode == 'lm_beam':
             assert paras.lm_model_path is not None, "In LM Beam decode mode, lm_model_path should be specified"
@@ -96,12 +96,15 @@ class Tester:
         logger.notice(f"Loading data from {self.data_dir}")
         if self.model_name == 'blstm':
             self.id2ch = [BLANK_SYMBOL]
-            with open(self.config['solver']['spm_mapping']) as fin:
-                for line in fin.readlines():
-                    self.id2ch.append(line.rstrip().split(' ')[0])
-                self.id2ch.append('</s>')
+        elif self.model_name == 'transformer':
+            self.id2ch = [SOS_SYMBOL]
         else:
             raise NotImplementedError
+
+        with open(self.config['solver']['spm_mapping']) as fin:
+            for line in fin.readlines():
+                self.id2ch.append(line.rstrip().split(' ')[0])
+            self.id2ch.append(EOS_SYMBOL)
         logger.log(f"Train units: {self.id2ch}")
 
         setattr(self, 'eval_set', get_loader(
@@ -123,8 +126,9 @@ class Tester:
         else:
             logger.notice("Start greedy decoding")
             if self.batch_size > 1:
-                logger.log(f"Number of utterance batches to decode: {len(self.eval_set)}, decoding with {self.batch_size} batch_size using gpu")
-                self._decode = self.gpu_greedy_decode
+                dev = 'gpu' if self.use_gpu else 'cpu'
+                logger.log(f"Number of utterance batches to decode: {len(self.eval_set)}, decoding with {self.batch_size} batch_size using {dev}")
+                self._decode = self.batch_greedy_decode
                 self.njobs = 1
             else:
                 logger.log(f"Number of utterances to decode: {len(self.eval_set)}, decoding with {self.njobs} threads using cpu")
@@ -145,7 +149,7 @@ class Tester:
             tbar = get_bar(total=len(self.eval_set), leave=True)
 
             for cur_b, (xs, ilens, ys, olens) in enumerate(self.eval_set):
-                self.gpu_greedy_decode(xs, ilens, ys, olens)
+                self.batch_greedy_decode(xs, ilens, ys, olens)
                 tbar.update(1)
 
 
@@ -156,6 +160,8 @@ class Tester:
             from src.model.blstm.mono_blstm import MonoBLSTM as ASRModel
         elif self.model_name == 'las':
             from src.model.seq2seq.mono_las import MonoLAS as ASRModel
+        elif self.model_name == 'transformer':
+            from src.model.transformer_pytorch.mono_transformer_torch import MyTransformer as ASRModel
         else:
             raise NotImplementedError
         self.asr_model = ASRModel(self.id2ch, self.config['asr_model'])
@@ -175,11 +181,8 @@ class Tester:
         if self.decode_mode != 'greedy':
             if self.model_name == 'blstm':
                 raise NotImplementedError
-                self.asr_model.set_beam_decode_params(self.dec_beam_size, \
-                                                      self.dec_lm_w, \
-                                                      self.lm_model_path)
-            elif self.model_name == 'las':
-                self.asr_model.set_beam_decode_params(self.beam_decode_param)
+            elif self.model_name == 'transformer':
+                raise NotImplementedError
             else:
                 raise NotImplementedError
 
@@ -188,27 +191,52 @@ class Tester:
         if self.model_name == 'blstm':
             #FIXME: should we discard everyting after eos_id???
             return [i for i in hyp if i < self.eos_id]
+        elif self.model_name == 'transformer':
+            # step1: remove everyting after eos
+            eos_pos = len(hyp) + 1
+            ret = []
+            if len(hyp) > 1:
+                for pos in range(1, len(hyp)):
+                    if hyp[pos] == self.eos_id:
+                        eos_pos = pos
+                        break
+                return hyp[:eos_pos]
+            else:
+                return ret
         else:
             raise NotImplementedError
-        # return [i for i in hyp if i < self.sos_id]
 
     #TODO: make the following more modularized
-    def gpu_greedy_decode(self, xs, ilens, ys, olens):
+    def batch_greedy_decode(self, xs, ilens, ys, olens):
+        # if self.model_name == 'transformer':
+            # # logger.log(torch.max(olens) - torch.min(olens), prefix='test')
+            # logger.log(ilens, prefix='test')
+            # return True
         with torch.no_grad():
-            preds, _ = self.asr_model(xs, ilens)
-            preds = torch.argmax(preds, dim=-1)
+            if self.model_name == 'blstm':
+                preds, _ = self.asr_model(xs, ilens)
+                preds = torch.argmax(preds, dim=-1)
+                for pred, y in zip(preds, ys):
+                    pred = self.trim(pred.tolist())
+                    pred = [x[0] for x in groupby(pred)]
+                    if self.blank_id is not None:
+                        pred = [x for x in pred if x!= self.blank_id]
+                    self.write_hyp(y.tolist(), pred)
+                del preds
+            elif self.model_name == 'transformer':
+                preds = self.asr_model.recog(xs, ilens)
+                preds = preds.transpose(0,1)
+                # preds, _  = self.asr_model(xs, ilens, ys, olens)
+                # preds = torch.argmax(preds, dim=-1)
+                for pred, y in zip(preds, ys):
+                    pred = self.trim(pred.tolist())
+                    self.write_hyp(y.tolist(), pred)
+                del preds
+            else:
+                raise NotImplementedError(f"{self.model_name} doesn't support greedy decode batchwise")
 
-            for pred, y in zip(preds, ys):
-                pred = self.trim(pred.tolist())
-                pred = [x[0] for x in groupby(pred)]
-                if self.blank_id is not None:
-                    pred = [x for x in pred if x!= self.blank_id]
-                self.write_hyp(y.tolist(), pred)
-            del preds
         del xs, ilens, ys, olens
         return True
-
-
 
 
     def greedy_decode(self, cur_step, x, ilen, y, olen):

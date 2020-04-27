@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description='Evaluate the decoded hypothesis vi
 parser.add_argument('--config', type=str, help='Path to config file', required=True)
 parser.add_argument('--accent', choices=AVAIL_ACCENTS, required=True)
 parser.add_argument('--algo', choices=['reptile','fomaml', 'multi', 'fomaml_fast','no'], required=True)
-parser.add_argument('--model_name', required=True, choices=['blstm','las'])
+parser.add_argument('--model_name', required=True, choices=['blstm','las','transformer'])
 parser.add_argument('--eval_suffix', default=None, type=str, help='Evaluation suffix', required=True)
 parser.add_argument('--decode_mode', default='greedy', type=str, choices=['greedy','beam','lm_beam'])
 parser.add_argument('--pretrain_suffix',type=str, help='Pretrain model suffix', nargs='?',const=None)
@@ -62,13 +62,15 @@ spm.Load(config['solver']['spm_model'])
 id2units = list()
 if paras.model_name == 'blstm':
     id2units.append(BLANK_SYMBOL)
-    with open(config['solver']['spm_mapping']) as fin:
-        for line in fin.readlines():
-            id2units.append(line.rstrip().split(' ')[0])
-        id2units.append('</s>')
-            
+elif paras.model_name == 'transformer':
+    id2units.append(SOS_SYMBOL)
 else:
     raise NotImplementedError(f"{paras.model_name} is not implemented")
+
+with open(config['solver']['spm_mapping']) as fin:
+    for line in fin.readlines():
+        id2units.append(line.rstrip().split(' ')[0])
+    id2units.append(EOS_SYMBOL)
 
 def to_list(s):
     ret = list(map(int, s.split(' ')))
@@ -79,6 +81,7 @@ def remove_accent(s):
     return unidecode.unidecode(s)
 
 def filter(s):
+    # return re.sub(r'([,.!:-?"\'])\1+', r'\1', s)
     return s.translate({ord(c): None for c in IGNORE_CH_LIST})
 
 ### Cal CER ####################################################################

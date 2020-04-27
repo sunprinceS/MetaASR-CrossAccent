@@ -140,6 +140,41 @@ class MyTransformer(nn.Module):
 
         return ys_in_pad, ys_out_pad, olens
 
+    def recog(self, xs_pad, ilens):
+        assert xs_pad.size(0) == ilens.size(0), "Batch size mismatch"
+        batch_size = xs_pad.size(0)
+
+        enc_pad, enc_lens = self.extract_feat(xs_pad, ilens)
+        enc_pad = enc_pad.transpose(0,1) # T * B * d_model
+        enc_pad = self.pos_encoder(enc_pad)
+        enc_pad_mask = make_bool_pad_mask(enc_lens) # T * B * d_model (if True: means padding)
+        enc_pad_mask = to_device(self, enc_pad_mask)
+
+        decode_maxlen = enc_lens.max().item()
+        
+        memory = self.encoder(enc_pad, src_key_padding_mask = enc_pad_mask)
+
+        # TODO: should we sample during decoding, or just use the logit??
+        # use sampled char then embed currently
+
+        # Init
+        sos = torch.ones(1, batch_size).fill_(self.sos_id).to(dtype=torch.int64)
+        sos = to_device(self,sos) # 1 * B
+        out = to_device(self, torch.tensor([], dtype=torch.int64))
+
+        for decode_step in range(1,decode_maxlen+1):
+            ys_in_pad = self.pre_embed(torch.cat([sos, out])) # (decode_step) * B * d_model
+            ys_in_pad = self.pos_encoder(ys_in_pad)
+            tgt_self_attn_mask = to_device(self, generate_square_subsequent_mask(ys_in_pad.size(0)))
+
+            out = self.decoder(ys_in_pad, memory, 
+                               tgt_mask = tgt_self_attn_mask,
+                               memory_key_padding_mask = enc_pad_mask)
+            out = self.char_trans(out)
+            out = torch.argmax(out, dim=-1)
+
+        return out # L * B
+
     def forward(self, xs_pad, ilens, ys, olens):
         assert xs_pad.size(0) == ilens.size(0) == len(ys) == olens.size(0), "Batch size mismatch"
 

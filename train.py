@@ -92,17 +92,18 @@ np.random.seed(paras.seed)
 torch.manual_seed(paras.seed)
 if torch.cuda.is_available(): torch.cuda.manual_seed_all(paras.seed)
 
-if paras.decode_mode != 'greedy':
-    assert paras.decode_batch_size == 1, f"decode_batch_size can only be 1 if decode_mode is {paras.decode_mode}"
-    if paras.decode_batch_size > 1 and torch.cuda.device_count() == 0:
-        logger.warning(f"Decode batch size is {paras.decode_batch_size}, but no gpu detected, so reset to 1 and use cpu for decoding")
-        paras.decode_batch_size = 1
 
 with open(Path('data','accent-code.json'),'r') as fin:
     id2accent = json.load(fin)
 
 if paras.test:
     from src.tester import Tester
+
+    if paras.decode_mode != 'greedy':
+        assert paras.decode_batch_size == 1, f"decode_batch_size can only be 1 if decode_mode is {paras.decode_mode}"
+        if paras.cuda and torch.cuda.device_count() == 0:
+            logger.warning(f"cuda is set to True, but no gpu detected, use cpu for decoding")
+            paras.cuda = False
     solver = Tester(config, paras, id2accent)
 else:
     if paras.model_name == 'blstm':
