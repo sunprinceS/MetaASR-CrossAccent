@@ -32,7 +32,6 @@ def get_trainer(cls, config, paras, id2accent):
             if isinstance(self.asr_opt, TransformerOptimizer):
                 logger.log("Use TransformerOptimizer", prefix='info')
 
-
             self.sos_id = self.asr_model.sos_id
             self.eos_id = self.asr_model.eos_id
 
@@ -41,7 +40,8 @@ def get_trainer(cls, config, paras, id2accent):
         def exec(self):
             self.train()
 
-        def run_batch(self, cur_b, x, ilens, ys, olens, train):
+        def run_batch(self, cur_b, x, ilens, ys, olens, train, accent_idx=None):
+            # if accent_idx is not None -> monolingual training
 
             batch_size = len(ys)
             pred, gold = self.asr_model(x, ilens, ys, olens)
@@ -71,7 +71,7 @@ def get_trainer(cls, config, paras, id2accent):
                 info = { 'loss': loss.item(), 'acc': float(n_correct)/n_total}
                 # if self.global_step % 5 == 0:
                 if self.global_step % 500 == 0:
-                    self.probe_model(pred.detach(), gold)
+                    self.probe_model(pred.detach(), gold, accent_idx)
                 self.asr_opt.zero_grad()
                 loss.backward()
 
@@ -82,7 +82,9 @@ def get_trainer(cls, config, paras, id2accent):
 
             return info
 
-        def probe_model(self, pred, ys_out):
+        def probe_model(self, pred, ys_out, accent_idx):
+            if accent_idx is not None:
+                logger.log(f"Probe on {self.accents[accent_idx]}", prefix='debug')
             self.metric_observer.cal_att_cer(torch.argmax(pred[0], dim=-1), ys_out[0], show=True, show_decode=True)
             self.metric_observer.cal_att_wer(torch.argmax(pred[0], dim=-1), ys_out[0], show=True)
 

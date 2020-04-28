@@ -136,13 +136,6 @@ class TrainInterface:
 
         #TODO: combine the following with Metric
         self.id2ch = self.id2units
-        # self.id2ch = dict()
-        # self.ch2id = dict()
-        # with open(self.data_dir.resolve().parents[0].joinpath('valid_train_en_unigram150_units.txt')) as fin:
-            # for line in fin.readlines():
-                # ch, idx = line.split(' ')
-                # self.id2ch[int(idx)] = ch
-                # self.ch2id[ch] = int(idx)
 
         setattr(self, 'train_set', get_loader(
             self.data_dir.joinpath('train'), 

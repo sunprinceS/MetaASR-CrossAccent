@@ -5,14 +5,14 @@ asr_model:
 
 
   idim: 83
-  nheads: 4
-  d_model: 256
+  nheads: 8
+  d_model: 512
   d_inner: 2048
   dropout: 0.1
-  tgt_share_weight: 0
+  tgt_share_weight: 1
 
   encoder:
-    nlayers: 8
+    nlayers: 2
 
   decoder:
     nlayers: 4
@@ -21,18 +21,18 @@ asr_model:
 
 solver:
   # Data options
-  setting: 'mono-transformer-torch-trick-8e4d' # seems no need to add baseline or something
+  setting: 'multi-transformer-hkust' # seems no need to add baseline or something
   data_root: 'data'
-  total_epochs: 100
-  #total_epochs: 2
+  total_steps: 1000000
   spm_mapping: 'data/valid_train_en_unigram150_units.txt'
   spm_model: 'data/valid_train_en_unigram150.model'
   label_smoothing: 0.2
 
   # Validation options
   #eval_ival: 20
-  eval_ival: 10000
+  eval_ival:  5000
   log_ival: 20
+  save_ival: 5000
 
   batch_size: 32 
   dev_batch_size: 32
@@ -40,11 +40,3 @@ solver:
   max_ilen: 1500
   dev_max_ilen: 3000
   half_batch_ilen: 512
-
-  beam_decode:
-    min_step_ratio: 0.0
-    max_step_ratio: 1.0
-    beam_size: 20
-    att_w: 0.5
-    ctc_w: 0.5
-    lm_w: 0

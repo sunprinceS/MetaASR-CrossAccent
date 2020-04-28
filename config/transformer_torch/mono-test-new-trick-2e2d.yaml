@@ -9,19 +9,19 @@ asr_model:
   d_model: 256
   d_inner: 2048
   dropout: 0.1
-  tgt_share_weight: 0
+  tgt_share_weight: 1
 
   encoder:
-    nlayers: 8
+    nlayers: 2
 
   decoder:
-    nlayers: 4
+    nlayers: 2
 
   pos_dropout: 0.1
 
 solver:
   # Data options
-  setting: 'mono-transformer-torch-trick-8e4d' # seems no need to add baseline or something
+  setting: 'mono-transformer-torch-trick-2e2d' # seems no need to add baseline or something
   data_root: 'data'
   total_epochs: 100
   #total_epochs: 2
