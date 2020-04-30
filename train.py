@@ -13,6 +13,7 @@ from pathlib import Path
 from src.marcos import *
 from src.mono_interface import MonoASRInterface
 from src.utils import get_usable_cpu_cnt
+import src.monitor.logger as logger
 
 # Make cudnn deterministic to reproduce result
 torch.backends.cudnn.deterministic = True
@@ -53,6 +54,8 @@ parser.add_argument('--pretrain_step', type=int, default=0)
 parser.add_argument('--pretrain_tgt_accent', choices=AVAIL_ACCENTS, default='all')
 parser.add_argument('--pretrain_model_path',type=str, default=None, 
                     help='directly set Pretrain model path')
+
+# for meta
 
 # training opts 
 parser.add_argument('--resume',action='store_true')

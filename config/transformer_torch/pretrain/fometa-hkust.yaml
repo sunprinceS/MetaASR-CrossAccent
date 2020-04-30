@@ -1,0 +1,48 @@
+asr_model:
+  inner_optimizer_cls: 'SGD'
+  inner_optimizer_opt:
+    # actually it won't need if meta_k is 1
+    momentum: 0.9
+    nesterov: True
+  meta_opt_cls: 'noam'
+  meta:
+    optimizer_opt:
+      k: 10
+      warmup_steps: 25000
+
+  idim: 83
+  nheads: 8
+  d_model: 512
+  d_inner: 2048
+  dropout: 0.1
+  tgt_share_weight: 1
+
+  encoder:
+    nlayers: 2
+
+  decoder:
+    nlayers: 4
+
+  pos_dropout: 0.1
+
+solver:
+  # Data options
+  setting: 'fometa-transformer-hkust' # seems no need to add baseline or something
+  data_root: 'data'
+  total_steps: 1000000
+  spm_mapping: 'data/valid_train_en_unigram150_units.txt'
+  spm_model: 'data/valid_train_en_unigram150.model'
+  label_smoothing: 0.2
+
+  # Validation options
+  #eval_ival: 20
+  eval_ival:  5000
+  log_ival: 20
+  save_ival: 5000
+
+  batch_size: 32 
+  dev_batch_size: 32
+  min_ilen: 10
+  max_ilen: 1500
+  dev_max_ilen: 3000
+  half_batch_ilen: 512

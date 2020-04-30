@@ -23,14 +23,20 @@ def get_trainer(cls, config, paras, id2accent):
             if self.label_smooth_rate > 0.0:
                 logger.log(f"Use label smoothing rate {self.label_smooth_rate}",prefix='info')
             # self.asr_opt = optim.RAdam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-9)
-            self.asr_opt = TransformerOptimizer(
-                torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
-                self.config['asr_model']['optimizer_opt']['k'],
-                self.config['asr_model']['d_model'],
-                self.config['asr_model']['optimizer_opt']['warmup_steps']
-            )
-            if isinstance(self.asr_opt, TransformerOptimizer):
-                logger.log("Use TransformerOptimizer", prefix='info')
+            # if self.config['asr_model']['optimizer_cls'] == 'noam':
+            if 'inner_optimizer_cls' not in self.config['asr_model']:
+                self.asr_opt = TransformerOptimizer(
+                    torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
+                    self.config['asr_model']['optimizer_opt']['k'],
+                    self.config['asr_model']['d_model'],
+                    self.config['asr_model']['optimizer_opt']['warmup_steps']
+                )
+            else:
+                logger.notice("During meta-training, model optimizer will reset after running each task")
+                # self.asr_opt = getattr(torch.optim, \
+                                       # self.config['asr_model']['inner_optimizer_cls'])
+                # self.asr_opt = self.asr_opt(self.asr_model.parameters(), \
+                                            # **self.config['asr_model']['inner_optimizer_opt'])
 
             self.sos_id = self.asr_model.sos_id
             self.eos_id = self.asr_model.eos_id

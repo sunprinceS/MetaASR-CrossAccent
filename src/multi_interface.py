@@ -22,6 +22,8 @@ class MultiASRInterface(PretrainInterface):
         self.asr_model = None
         self.asr_opt = None
 
+        assert self.sample_strategy == 'normal', "Multi-task training only support normal sampling strategy"
+
         self.max_step = paras.max_step if paras.max_step > 0 else config['solver']['total_steps']
         self.dashboard.set_status('pretraining')
 

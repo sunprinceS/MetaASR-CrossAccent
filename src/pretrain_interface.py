@@ -28,6 +28,8 @@ class PretrainInterface:
         self.half_batch_ilen = config['solver']['half_batch_ilen']
         self.dev_max_ilen = config['solver']['dev_max_ilen']
 
+        self.sample_strategy = paras.sample_strategy
+
         self.best_cer = INIT_BEST_ER
         self.best_wer = INIT_BEST_ER
 
@@ -77,7 +79,7 @@ class PretrainInterface:
 
             self.log_dir.mkdir(parents=True)
             self.train_info = RunningAvgDict(decay_rate=0.99)
-            self.global_step = 0
+            self.global_step = 1
         else:
             self.resume_model_path = self.log_dir.joinpath('snapshot.latest')
             info_dict_path = self.log_dir.joinpath('info_dict.latest')
@@ -107,17 +109,21 @@ class PretrainInterface:
                                    self.train_type, paras.resume)
     def load_data(self):
         self.id2ch = self.id2units
-        self.data_container = DataContainer(
-                                self.data_dirs, 
-                                batch_size=self.config['solver']['batch_size'],
-                                dev_batch_size=self.config['solver']['dev_batch_size'],
-                                is_memmap = self.is_memmap,
-                                is_bucket = self.is_bucket,
-                                num_workers = self.paras.njobs,
-                                min_ilen = self.config['solver']['min_ilen'],
-                                max_ilen = self.config['solver']['max_ilen'],
-                                half_batch_ilen = self.config['solver']['half_batch_ilen'],
-                                )
+
+        if self.sample_strategy == 'normal':
+            self.data_container = DataContainer(
+                                    self.data_dirs, 
+                                    batch_size=self.config['solver']['batch_size'],
+                                    dev_batch_size=self.config['solver']['dev_batch_size'],
+                                    is_memmap = self.is_memmap,
+                                    is_bucket = self.is_bucket,
+                                    num_workers = self.paras.njobs,
+                                    min_ilen = self.config['solver']['min_ilen'],
+                                    max_ilen = self.config['solver']['max_ilen'],
+                                    half_batch_ilen = self.config['solver']['half_batch_ilen'],
+                                    )
+        else:
+            raise NotImplementedError
 
     def write_log(self, k, v):
         with open(self.log_dir.joinpath(k),'a') as fout:

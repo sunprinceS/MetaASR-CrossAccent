@@ -33,6 +33,7 @@ parser.add_argument('--no_bucket',action='store_true')
 
 parser.add_argument('--meta_k', default=None, type=int)
 parser.add_argument('--meta_batch_size', default=None, type=int)
+parser.add_argument('--sample_strategy', default='normal', choices=['normal','meta-split','meta-split-dev'])
 parser.add_argument('--max_step', default=0, type=int)
 parser.add_argument('--resume',action='store_true')
 parser.add_argument('--resume_step', default=-1, type=int)
@@ -68,8 +69,10 @@ with open(Path('data','accent-code.json'),'r') as fin:
 
 if paras.algo == 'multi':
     from src.multi_interface import MultiASRInterface as ASRInterface
+elif paras.algo == 'fomaml' or paras.algo == 'reptile':
+    from src.fo_meta_interface import FOMetaASRInterface as ASRInterface
 else:
-    from src.meta_interface import MetaASRInterface as ASRInterface
+    raise NotImplementedError
 
 if paras.model_name == 'transformer':
     from src.transformer_torch_trainer import get_trainer
