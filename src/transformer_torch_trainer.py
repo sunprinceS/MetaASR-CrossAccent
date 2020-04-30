@@ -33,10 +33,6 @@ def get_trainer(cls, config, paras, id2accent):
                 )
             else:
                 logger.notice("During meta-training, model optimizer will reset after running each task")
-                # self.asr_opt = getattr(torch.optim, \
-                                       # self.config['asr_model']['inner_optimizer_cls'])
-                # self.asr_opt = self.asr_opt(self.asr_model.parameters(), \
-                                            # **self.config['asr_model']['inner_optimizer_opt'])
 
             self.sos_id = self.asr_model.sos_id
             self.eos_id = self.asr_model.eos_id
