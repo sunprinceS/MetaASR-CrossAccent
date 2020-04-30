@@ -6,7 +6,7 @@ from tqdm import tqdm
 from src.marcos import *
 from src.model.transformer_pytorch.mono_transformer_torch import MyTransformer
 from src.model.transformer_pytorch.optimizer import TransformerOptimizer
-import torch_optimizer as optim
+import torch_optimizer as extra_optim
 from src.nets_utils import to_device
 import src.monitor.logger as logger
 
@@ -24,13 +24,27 @@ def get_trainer(cls, config, paras, id2accent):
                 logger.log(f"Use label smoothing rate {self.label_smooth_rate}",prefix='info')
             # self.asr_opt = optim.RAdam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-9)
             # if self.config['asr_model']['optimizer_cls'] == 'noam':
-            if 'inner_optimizer_cls' not in self.config['asr_model']:
-                self.asr_opt = TransformerOptimizer(
-                    torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
-                    self.config['asr_model']['optimizer_opt']['k'],
-                    self.config['asr_model']['d_model'],
-                    self.config['asr_model']['optimizer_opt']['warmup_steps']
-                )
+            if 'inner_optimizer_cls' not in self.config['asr_model']: # multi or mono
+                if self.config['asr_model']['optimizer_cls'] == 'noam':
+                    logger.notice("Use noam optimizer, it is recommended to be used in mono-lingual training")
+                    self.asr_opt = TransformerOptimizer(
+                        torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
+                        self.config['asr_model']['optimizer_opt']['k'],
+                        self.config['asr_model']['d_model'],
+                        self.config['asr_model']['optimizer_opt']['warmup_steps']
+                    )
+                elif self.config['asr_model']['optimizer_cls'] == 'RAdam':
+                    logger.notice(f"Use third-library {self.config['asr_model']['optimizer_cls']} optimizer")
+                    self.asr_opt = getattr(extra_optim,\
+                                           self.config['asr_model']['optimizer_cls'])
+                    self.asr_opt = self.asr_opt(self.asr_model.parameters(), \
+                                                **self.config['asr_model']['optimizer_opt'])
+                else:
+                    logger.notice(f"Use {self.config['asr_model']['optimizer_cls']} optimizer, it is recommended to be used in fine-tuning")
+                    self.asr_opt = getattr(torch.optim,\
+                                           self.config['asr_model']['optimizer_cls'])
+                    self.asr_opt = self.asr_opt(self.asr_model.parameters(), \
+                                                **self.config['asr_model']['optimizer_opt'])
             else:
                 logger.notice("During meta-training, model optimizer will reset after running each task")
 

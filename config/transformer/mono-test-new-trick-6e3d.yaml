@@ -1,33 +1,33 @@
 asr_model:
   optimizer_opt: 
-  k: 1.0
-  warmup_steps: 25000
+    k: 1.0
+    warmup_steps: 25000
 
 
   idim: 83
-  nheads: 8
-  d_model: 512
+  nheads: 4
+  d_model: 256
   d_inner: 2048
   dropout: 0.1
-  tgt_share_weight: 1
+  tgt_share_weight: 0
 
   encoder:
-    nlayers: 8
+    nlayers: 6
 
   decoder:
-    nlayers: 4
+    nlayers: 3
 
   pos_dropout: 0.1
 
 solver:
   # Data options
-  setting: 'mono-transformer-torch-test' # seems no need to add baseline or something
+  setting: 'mono-transformer-torch-trick-6e3d' # seems no need to add baseline or something
   data_root: 'data'
-  total_epochs: 25
+  total_epochs: 100
   #total_epochs: 2
   spm_mapping: 'data/valid_train_en_unigram150_units.txt'
   spm_model: 'data/valid_train_en_unigram150.model'
-  label_smoothing: 0.1
+  label_smoothing: 0.2
 
   # Validation options
   #eval_ival: 20

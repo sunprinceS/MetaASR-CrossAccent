@@ -51,7 +51,7 @@ parser.add_argument('--pretrain_suffix', type=str, default=None,
 parser.add_argument('--pretrain_setting', type=str, default=None)
 parser.add_argument('--pretrain_runs', type=int, default=0)
 parser.add_argument('--pretrain_step', type=int, default=0)
-parser.add_argument('--pretrain_tgt_accent', choices=AVAIL_ACCENTS, default='all')
+parser.add_argument('--pretrain_tgt_accent', choices=AVAIL_ACCENTS, default='wa')
 parser.add_argument('--pretrain_model_path',type=str, default=None, 
                     help='directly set Pretrain model path')
 

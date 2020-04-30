@@ -24,7 +24,7 @@ parser.add_argument('--pretrain_suffix', type=str, help='Pretrain model suffix',
 parser.add_argument('--pretrain_accents', type=str, nargs='+', choices=AVAIL_ACCENTS)
 parser.add_argument('--num_pretrain', type=int, required=True)
 parser.add_argument('--tgt_accent', type=str, choices=AVAIL_ACCENTS)
-parser.add_argument('--runs', default=0,type=int)
+parser.add_argument('--runs', default=0,type=int, help='Different runs means use different seed')
 parser.add_argument('--overwrite',action='store_true')
 parser.add_argument('--seed', default=531, type=int, help='Random seed for reproducable results.')
 parser.add_argument('--no_cuda',action='store_true')

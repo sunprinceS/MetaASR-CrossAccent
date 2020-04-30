@@ -115,7 +115,7 @@ class MonoASRInterface(TrainInterface):
                        self.log_dir.joinpath(f"snapshot.init"))
 
     def train(self):
-        # self.evaluate()
+        self.evaluate()
         try:
             if self.save_verbose:
                 self.save_init()

@@ -1,8 +1,7 @@
 asr_model:
-  optimizer_opt: 
-  k: 1.0
-  warmup_steps: 25000
-
+  optimizer_cls: 'AdamW'
+  optimizer_opt:
+    lr: 0.001
 
   idim: 83
   nheads: 8
@@ -12,7 +11,7 @@ asr_model:
   tgt_share_weight: 1
 
   encoder:
-    nlayers: 8
+    nlayers: 2
 
   decoder:
     nlayers: 4
@@ -21,17 +20,17 @@ asr_model:
 
 solver:
   # Data options
-  setting: 'mono-transformer-torch-test' # seems no need to add baseline or something
+  setting: 'hkust-transformer-adamw-lr1e-3' # seems no need to add baseline or something
   data_root: 'data'
-  total_epochs: 25
+  total_epochs: 10
   #total_epochs: 2
   spm_mapping: 'data/valid_train_en_unigram150_units.txt'
   spm_model: 'data/valid_train_en_unigram150.model'
-  label_smoothing: 0.1
+  label_smoothing: 0.2
 
   # Validation options
   #eval_ival: 20
-  eval_ival: 10000
+  eval_ival: 1000000
   log_ival: 20
 
   batch_size: 32 
@@ -40,6 +39,14 @@ solver:
   max_ilen: 1500
   dev_max_ilen: 3000
   half_batch_ilen: 512
+
+  pretrain_module:
+    - feat_extractor
+    - vgg2enc
+    - char_trans
+    - pre_embed
+    - encoder
+    - decoder
 
   beam_decode:
     min_step_ratio: 0.0

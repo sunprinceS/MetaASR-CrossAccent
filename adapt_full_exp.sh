@@ -25,7 +25,7 @@ else
 fi
 
 ## train
-cmd="python train.py --config $CONFIG --pretrain --pretrain_setting $PRETRAIN_SETTING --pretrain_suffix $PRETRAIN_SUFFIX --pretrain_step $PRETRAIN_STEP --eval_suffix step$PRETRAIN_STEP --accent $ACCENT --algo $ALGO --model_name $MODEL_NAME --njobs 4"
+cmd="python train.py --config $CONFIG --pretrain --pretrain_setting $PRETRAIN_SETTING --pretrain_suffix $PRETRAIN_SUFFIX --pretrain_step $PRETRAIN_STEP --eval_suffix step$PRETRAIN_STEP --accent $ACCENT --algo $ALGO --model_name $MODEL_NAME --njobs 4 --eval_every_epoch"
 if [[ $OVERWRITE == "overwrite" ]];then
   cmd="$cmd --overwrite"
 fi

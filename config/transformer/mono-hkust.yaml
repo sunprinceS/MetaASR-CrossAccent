@@ -1,4 +1,5 @@
 asr_model:
+  optimizer_cls: 'noam'
   optimizer_opt: 
     k: 1.0
     warmup_steps: 25000

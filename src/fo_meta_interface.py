@@ -15,10 +15,6 @@ from src.model.transformer_pytorch.optimizer import TransformerOptimizer
 from src.utils import get_bar
 import src.monitor.logger as logger
 
-# TODO:
-# 1. TransformerOptimizer (aka noam optimizer )is also needed during meta-train (or can we
-# automatically learn the lr?)
-
 class FOMetaASRInterface(PretrainInterface):
 
     def __init__(self, config, paras, id2accent):
