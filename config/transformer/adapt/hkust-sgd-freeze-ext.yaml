@@ -1,0 +1,63 @@
+asr_model:
+  optimizer_cls: 'SGD'
+  optimizer_opt:
+    lr: 0.00028
+    momentum: 0.9
+    nesterov: True
+
+  idim: 83
+  nheads: 8
+  d_model: 512
+  d_inner: 2048
+  dropout: 0.1
+  tgt_share_weight: 1
+
+  encoder:
+    nlayers: 2
+
+  decoder:
+    nlayers: 4
+
+  pos_dropout: 0.1
+
+solver:
+  # Data options
+  setting: 'hkust-transformer-sgd-freeze-ext' # seems no need to add baseline or something
+  data_root: 'data'
+  total_epochs: 10
+  #total_epochs: 2
+  spm_mapping: 'data/valid_train_en_unigram150_units.txt'
+  spm_model: 'data/valid_train_en_unigram150.model'
+  label_smoothing: 0.2
+
+  # Validation options
+  #eval_ival: 20
+  eval_ival: 1000000
+  log_ival: 20
+
+  batch_size: 32 
+  dev_batch_size: 32
+  min_ilen: 10
+  max_ilen: 1500
+  dev_max_ilen: 3000
+  half_batch_ilen: 512
+
+  pretrain_module:
+    - feat_extractor
+    - vgg2enc
+    - char_trans
+    - pre_embed
+    - encoder
+    - decoder
+
+  freeze_module:
+    - feat_extractor
+    - vgg2enc
+
+  beam_decode:
+    min_step_ratio: 0.0
+    max_step_ratio: 1.0
+    beam_size: 20
+    att_w: 0.5
+    ctc_w: 0.5
+    lm_w: 0

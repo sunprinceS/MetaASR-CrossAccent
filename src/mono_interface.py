@@ -98,9 +98,21 @@ class MonoASRInterface(TrainInterface):
             pretrain_dict = self.filter_model(torch.load(self.pretrain_model_path))
             model_dict.update(pretrain_dict)
             self.asr_model.load_state_dict(model_dict)
+            if 'freeze_module' in self.config['solver']:
+                logger.warning("Part of model will be frozen during fine-tuning")
+                self.freeze_module(self.config['solver']['freeze_module'])
             logger.notice("Done!")
         else: # simple monolingual training from step 0
             logger.notice("Training from scratch")
+
+
+    def freeze_module(self, modules):
+        # logger.warning(f"Freeze modules: {','.join(modules)}")
+
+        for module in modules:
+            logger.warning(f"Freeze {module}")
+            for p in getattr(self.asr_model, module).parameters():
+                p.requires_grad = False
 
 
     def check_evaluate(self):
