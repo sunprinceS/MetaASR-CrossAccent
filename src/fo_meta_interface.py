@@ -102,7 +102,7 @@ class FOMetaASRInterface(PretrainInterface):
 
         if self.config['asr_model']['meta_opt_cls'] == 'noam':
             self.meta_opt = TransformerOptimizer(
-                torch.optim.Adam(params, betas=(0.9, 0.98), eps=1e-09),
+                torch.optim.Adam(params, betas=(0.9, 0.98), eps=1e-09, weight_decay=1e-3),
                 self.config['asr_model']['meta']['optimizer_opt']['k'],
                 self.config['asr_model']['d_model'],
                 self.config['asr_model']['meta']['optimizer_opt']['warmup_steps']

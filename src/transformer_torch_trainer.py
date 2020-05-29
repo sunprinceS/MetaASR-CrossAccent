@@ -28,7 +28,7 @@ def get_trainer(cls, config, paras, id2accent):
                 if self.config['asr_model']['optimizer_cls'] == 'noam':
                     logger.notice("Use noam optimizer, it is recommended to be used in mono-lingual training")
                     self.asr_opt = TransformerOptimizer(
-                        torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09),
+                        torch.optim.Adam(self.asr_model.parameters(), betas=(0.9, 0.98), eps=1e-09, weight_decay=1e-3),
                         self.config['asr_model']['optimizer_opt']['k'],
                         self.config['asr_model']['d_model'],
                         self.config['asr_model']['optimizer_opt']['warmup_steps']
