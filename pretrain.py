@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-
+import comet_ml
 import yaml
 import torch
 import random
 import argparse
 import json
-import comet_ml
+
 import numpy as np
 import datetime
 from pathlib import Path

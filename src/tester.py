@@ -3,12 +3,13 @@ import copy
 import time
 from itertools import groupby
 
+from comet_ml import Experiment, ExistingExperiment
 from shutil import rmtree
 from joblib import Parallel, delayed
 from pathlib import Path
 import torch
 
-from comet_ml import Experiment, ExistingExperiment
+
 from tqdm import tqdm
 
 from src.marcos import *
