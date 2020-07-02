@@ -1,7 +1,9 @@
 MetaASR CrossAccent
 ===
 
-**這個 repo 請先不要外流**
+This repo implements {fomaml, reptile, multi-task} pretraining interface for end-to-end ASR, and provides well-organized experiment flow.
+
+**Note**: This repo is aligned with the [paper](https://arxiv.org/abs/1910.12094), but apply meta learning on cross-accent setting. Since the corpus used in the paper (on cross-language setting) is not free (IARPA-BABEL).
 
 ## Prerequisites
 ### global
@@ -17,7 +19,9 @@ MetaASR CrossAccent
 * torch_optimizer==0.0.1a11 [repo](https://github.com/jettify/pytorch-optimizer)
 
 ### misc
-* Download corpus -> ask me
+* ~Download corpus -> ask me~
+   * If you are the member of NTU speech lab, ask me.
+   * If not, please download the corpus from (Mozilla Common Voice Project)[https://voice.mozilla.org/en/datasets], I'll add how to pre-process  it after I finished my master thesis lol. Basically, I used the recipe in [espnet](https://github.com/espnet/espnet/tree/master/egs/commonvoice/asr1) for pre-processing (but should modify a little bit for adding ACCENT label), then use the [the script](https://gist.github.com/sunprinceS/768b67b73bcd284f5bba60073494e7ac) to extract kaldi-format files into one numpy file (with memmap, to save RAM usage).
 * modify the `COMET_PROJECT_NAME`, `COMET_WORKSPACE` in `src/marcos.py` to your setting
 
 ## Note
@@ -58,3 +62,16 @@ MetaASR CrossAccent
     * `logger.py`: tqdm_logger logging
     * `metric.py`: how to calculate error rate
 
+Citation
+------------------------------------
+Feel free to use/modify the code, any bug report or improvement suggestion will be appreciated. If you find this project helpful for your research, please do consider to cite our paper, thanks!
+
+```
+@inproceedings{hsu2020meta,
+  title={Meta learning for end-to-end low-resource speech recognition},
+  author={Hsu, Jui-Yang and Chen, Yuan-Jui and Lee, Hung-yi},
+  booktitle={ICASSP 2020-2020 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages={7844--7848},
+  year={2020},
+  organization={IEEE}
+}
