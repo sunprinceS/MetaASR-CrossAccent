@@ -21,7 +21,7 @@ This repo implements {fomaml, reptile, multi-task} pretraining interface for end
 ### misc
 * ~Download corpus -> ask me~
    * If you are the member of NTU speech lab, ask me.
-   * If not, please download the corpus from (Mozilla Common Voice Project)[https://voice.mozilla.org/en/datasets], I'll add how to pre-process  it after I finished my master thesis lol. Basically, I used the recipe in [espnet](https://github.com/espnet/espnet/tree/master/egs/commonvoice/asr1) for pre-processing (but should modify a little bit for adding ACCENT label), then use the [the script](https://gist.github.com/sunprinceS/768b67b73bcd284f5bba60073494e7ac) to extract kaldi-format files into one numpy file (with memmap, to save RAM usage).
+   * If not, please download the corpus from [Mozilla Common Voice Project](https://voice.mozilla.org/en/datasets), I'll add how to pre-process  it after I finished my master thesis lol. Basically, I used the recipe in [espnet](https://github.com/espnet/espnet/tree/master/egs/commonvoice/asr1) for pre-processing (but should modify a little bit for adding ACCENT label), then use the [the script](https://gist.github.com/sunprinceS/768b67b73bcd284f5bba60073494e7ac) to extract kaldi-format files into one numpy file (with memmap, to save RAM usage).
 * modify the `COMET_PROJECT_NAME`, `COMET_WORKSPACE` in `src/marcos.py` to your setting
 
 ## Note
