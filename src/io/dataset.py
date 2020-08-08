@@ -1,7 +1,7 @@
 import torch 
 import numpy as np
 from pathlib import Path
-from torch.utils.data import Dataset, DataLoader, Sampler
+from torch.utils.data import Dataset, DataLoader, Sampler, random_split
 from torch.nn.utils.rnn import pad_sequence
 import src.monitor.logger as logger
 import random
@@ -153,7 +153,7 @@ class CommonVoiceDataset(Dataset):
         }
 
 
-def get_loader(data_dir, batch_size, is_memmap, is_bucket, num_workers=0, 
+def get_loader(data_dir, batch_size, is_memmap, is_bucket, num_workers=0, split_rate=1.0, split_seed=531,
                min_ilen=None, max_ilen=None, half_batch_ilen=None, 
                bucket_reverse=False, shuffle=True, read_file=False, 
                drop_last=False, pin_memory=True):
@@ -161,13 +161,22 @@ def get_loader(data_dir, batch_size, is_memmap, is_bucket, num_workers=0,
     assert not read_file, "Load from Kaldi ark haven't been implemented yet"
     dset = CommonVoiceDataset(data_dir, is_memmap)
 
+    if split_rate < 1.0:
+        logger.notice(f"Only use {split_rate * 100}% data for training (Split seed: {split_seed})")
+        tot_sz = len(dset)
+        num_tr = int(tot_sz * split_rate)
+        num_drop = tot_sz - num_tr
+
+        dset, _ = random_split(dset, [num_tr, num_drop], generator=torch.Generator().manual_seed(split_seed))
+
+
     # if data is already loaded in memory
     if not is_memmap: 
         num_workers = 0
 
     logger.notice(f"Loading data from {data_dir} with {num_workers} threads")
 
-    if is_bucket:
+    if is_bucket and split_rate == 1.0:
         my_sampler = BucketSampler(dset.ilens, 
                                    min_ilen = min_ilen, 
                                    max_ilen = max_ilen, 
@@ -181,6 +190,7 @@ def get_loader(data_dir, batch_size, is_memmap, is_bucket, num_workers=0,
                             collate_fn=collate_fn, batch_sampler=my_sampler,
                             drop_last=drop_last, pin_memory=pin_memory)
     else:
+        logger.notice("No bucket sampling, the efficincy will be a little bit worse")
         loader = DataLoader(dset, batch_size=batch_size, num_workers=num_workers,
                             collate_fn=collate_fn, shuffle=shuffle,
                             drop_last=drop_last, pin_memory=pin_memory)

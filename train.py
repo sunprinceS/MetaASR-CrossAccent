@@ -40,6 +40,9 @@ parser.add_argument('--use_tensorboard',action='store_true')
 parser.add_argument('--model_name', choices=['blstm','las','transformer'], default='transformer')
 parser.add_argument('--njobs', type=int, default=-1, 
                     help='Number of threads for decoding.')
+parser.add_argument('--split_rate', type=float, default=1.0, help='Split Ratio')
+parser.add_argument('--split_seed', type=int, default=531, help='Random seed for dataset splitting')
+
 parser.add_argument('--freeze_layer', type=str, default=None, choices=['VGG','VGG_BLSTM'])
 
 parser.add_argument('--save_verbose', action='store_true')
